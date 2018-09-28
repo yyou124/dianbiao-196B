@@ -137,7 +137,7 @@ ADJUSTMETERPROC_EXT _CALTMP 	g_CalTmp;
 ADJUSTMETERPROC_EXT _FILTERV 	g_FilterV;
 
 ADJUSTMETERPROC_EXT void AdjustMeterInit(void);
-//ADJUSTMETERPROC_EXT void GetAdjustPower(void);
+ADJUSTMETERPROC_EXT void GetAdjustPower(void);
 //ADJUSTMETERPROC_EXT unsigned char AdjustMeterProc(unsigned int ID,unsigned char *Src);
 
 #endif

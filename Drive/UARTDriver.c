@@ -67,11 +67,11 @@ void Init_Uart(void)
     SCON=Bin(01000000);				        	//选用模式1 8位数据 异步 可变波特率 接收中断使能
 //	SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
 //	SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
-	SBRTL = UART_BAUDRATE_115200&0x00FF;
-	SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
+	SBRTL = UART_BAUDRATE_9600&0x00FF;
+	SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
 	SFINE &= Bin(11110000);
 //	SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
-	SFINE |= (UART_BFINE_115200)&0x0F;
+	SFINE |= (UART_BFINE_9600)&0x0F;
 	SBRTH |= 0x80;                          	//串口0波特率发生器使能
 //----------UART1------------------------
 	SCON1=Bin(01000000);				        //选用模式1 8位数据 异步 可变波特率 接收中断使能

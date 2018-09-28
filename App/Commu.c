@@ -31,7 +31,6 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 #include "Headconfig.h"
 
 M_Transimt g_Tran;
-M_Commu g_Commu;
 /****************************************************************************
 ** 函数名称: ProtocolReport
 ** 函数描述: 协议数据组装函数  集抄
@@ -424,8 +423,7 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 			len_trasmit = 0;
 			g_Tran.AutoReportFlag = COUNT_DOWN;
 			g_Tran.AutoReportTime = 0; //重置自动上报尝试次数
-			//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
-			g_Tran.AutoReportCount = g_Commu.AutoReportTimeSet;//重置自动上报时间
+			g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
 			break;
 		}
 		case NB_ACK_2:
@@ -433,8 +431,7 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 			len_trasmit = 0;
 			g_Tran.AutoReportFlag = COUNT_DOWN;
 			g_Tran.AutoReportTime = 0; //重置自动上报尝试次数
-			//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
-			g_Tran.AutoReportCount = g_Commu.AutoReportTimeSet;//重置自动上报时间
+			g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
 			break;
 		}
 		//后台请求类判断
@@ -545,15 +542,6 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 			len_trasmit = ProtocolBuild(NB_PROTOCOL_FactoryID, DataBuild);
 			break;
 		}
-		case NB_PROTOCOL_ReportTime: //修改自动上报时间
-		{
-			g_Commu.AutoReportTimeSet = BCD2toINT(&DataRecieve[11]);//自动上报时间
-			g_Commu.AutoReportTimeSetAck = BCD2toINT(&DataRecieve[13]);//ACK相应时间
-			VER_WRbytes(EE_Commu_Time,&DataRecieve[11],4, 1);
-			g_Tran.AutoReportCount = 1;//1分钟后发出自动上报数据
-			len_trasmit = 0;
-			break;
-		}
 		default:
 		{
 			len_trasmit = 0;
@@ -621,13 +609,11 @@ void CommuProcess(void)
 		}
 		//不配置ACK回应
 		g_Tran.AutoReportFlag = 0;
-		//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
-		g_Tran.AutoReportCount = g_Commu.AutoReportTimeSet;//重置自动上报时间
+		g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
 		//配置ACK回应
 //		g_Tran.AutoReportTime ++;//尝试次数+1
 //		g_Tran.AutoReportFlag = WAITING_ACK;
-//		//g_Tran.AutoReportCount = NB_AUTO_REPORT_ACk;//设置等待ACK时间
-//		g_Tran.AutoReportCount = g_Commu.AutoReportTimeSetAck;//设置等待ACK时间
+//		g_Tran.AutoReportCount = NB_AUTO_REPORT_ACk;//设置等待ACK时间
 
 		return;
 	}/*自动上报进程finish*/

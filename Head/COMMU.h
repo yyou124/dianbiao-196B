@@ -77,7 +77,6 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define		NB_PROTOCOL_kWh_rst		0x21				//?????
 #define     NB_PROTOCOL_RelayCtrl	0x22				//?????
 #define     NB_PROTOCOL_FactoryID	0x23				//??????
-#define     NB_PROTOCOL_ReportTime	0x24				//??????
 //主动上报
 #define     NB_PROTOCOL_PowerON		0x71				//????
 #define     NB_PROTOCOL_JICHAO		0x72				//????
@@ -91,15 +90,11 @@ typedef struct
 	unsigned char AutoReportFlag;
     unsigned char AutoReportTime;	//自动上报尝试次数
 	unsigned int  AutoReportCount;	//自动上报时间
+    unsigned int  AutoReportAckTime;    //自动上报ACK回应时间
 } M_Transimt;
-typedef struct
-{
-    unsigned int AutoReportTimeSet;    //自动上报时间设置
-    unsigned int  AutoReportTimeSetAck; //自动上报ACK时间设置
-} M_Commu;
 
 extern M_Transimt g_Tran;
-extern M_Commu g_Commu;
+
 extern unsigned char ProtocolReport(unsigned char *DataBuild, unsigned char item);
 extern unsigned char ProtocolBuild(unsigned char item, unsigned char *DataBuild);
 extern unsigned char Commu_Return_Error(unsigned char *DataBuild, unsigned char item);

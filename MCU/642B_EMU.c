@@ -336,10 +336,10 @@ void ReadEMUFromTOEeprom(void)
         //VER_WRbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data), 1);	  //是否在这里要保存默认值，还是放到校表里将所有值初始化，现在校表是校一个就写一个值。
     }
     //加载校表参数（浮点型）
-    // if (VER_RDbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4) == 0)
-    // {
-    //     adjust_data_f.power2gain.y = 22.0;
-    // }
+    if (VER_RDbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4) == 0)
+    {
+        adjust_data_f.power2gain.y = 22.0;
+    }
     //以下代码有什么作用?
 //调整到基准的0.7340到1.4800
     /* if ((adjust_data.vgain < D_vgain_Min) || (adjust_data.vgain > D_vgain_Max))
@@ -562,8 +562,9 @@ void EMUTampProc(void)
             //powern = tmpval * (float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);
             //powern = tmpval * (float)(P1_Coefficient/g_ConstPara.Icont/g_ConstPara.Constant);  //56250000.0
 			//powern = tmpval * 0.0629;
-            //powern = (tmpval / adjust_data_f.power2gain.y) * 100;
-            powern = tmpval * (float)(P1_Coefficient / g_ConstPara.Icont / g_ConstPara.Constant);
+             powern = (tmpval / adjust_data_f.power2gain.y) * 100;
+            powern1 = tmpval * (float)(P1_Coefficient / g_ConstPara.Icont / g_ConstPara.Constant);
+
         }
         else
         {
@@ -574,6 +575,7 @@ void EMUTampProc(void)
         // powern = tmpval;
         //Long_BCD3(&g_InsBCD.Power[0], tmpval);       //放大100倍有功率值，单位为W，单相两线表，取计量回路的功率
         Long_BCD4(&g_InsBCD.Power[0], powern);
+        Long_BCD4(&g_InsBCD.Power1[0], powern1);
 
 //通道2无功率处理
         if(curn >= C_IStartForFilter)

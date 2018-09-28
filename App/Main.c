@@ -41,8 +41,15 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 ** 输出参数: 无
 *******************************************************************************************/
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-
+//107
+//char temp[108] = "0001110203040506FF7240000000000000000000002700000000000000000000000000000000000000000000000000120101180816U";
+//29
+char tempp[108] = "11123456FF72427121118816111U";
+//65
+char temp[108] = "0001110203040506FF724000000000000000000000270000000000000000000000000U";
+char *dest = temp;
+char *destt = tempp;
+unsigned char lendd;
 void main(void)
 {
 	IEN0 = 0x00;                        //关闭总中断，ADC和TPS中断，定时器0、1、2中断，外部1中断，串口0中断
@@ -61,38 +68,29 @@ void main(void)
 	CheckRTC();                         //RTC校验处理,改为默认时间2018-01-01 12: 00: 00
 	Init_Timer();                       //TIME初始化，目前仅使用定时器1
 	g_Flag.Run &= ~F_PWRUP;             //AC MODE
-
 /*
 目前启用的中断情况：
-Timer1      溢出中断
+Timer1     溢出中断
 UART0       SBUF中断
 RTC         SEC中断
 LPD         中断
 EMU         EEMU(EMU总中断，在Init_EMU中启用)PF脉冲中断
 */
+    //sprintf(dest,"AT+CFUN=0\r\n");//关机
+
+
 	IEN1 = (BIT7 | BIT3);               //开启LPD中断、RTC中断
 	EA =1;                              //总中断打开
 
 	while (1)
 	{
-    // TEST
-    // EE_KHH_address = EE_KWH0;
-    // SEQ_write(EE_KWH_ADDRESS,(unsigned char *)&EE_KHH_address,1);
-//    KWH[0] = 0x00;
-//    KWH[1] = 0x00;
-//    KWH[2] = 0x00;
-//    KWH[3] = 0x00;
-//    KWH[4] = 0x00;
-//    VER_WRbytes(EE_KWH_ADDRESS,&kwh_value.integer[0],5, 1);
-//    KWH[0] = 0x00;
-//    KWH[1] = 0x00;
-//    KWH[2] = 0x90;
-//    KWH[3] = 0x00;
-//    KWH[4] = 0x00;
-//    EE_KWH_shift();
-
-
-			
+		lendd = strlen(dest);
+		UART0_SendString((unsigned char *)dest,lendd);
+		Delay_ms(500); 
+		Delay_ms(500); 
+		Delay_ms(500);
+		Delay_ms(500);
+		UART0_SendString((unsigned char *)destt,strlen(tempp));
     if ((g_Flag.Run & F_PWRUP) == 0) //首次上电
     {
         ACModeWDTProc();             //AC模式喂狗                修改完成
