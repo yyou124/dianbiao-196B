@@ -166,7 +166,7 @@ void EUART0_ISP(void) interrupt 4
 				{
 					gbUartRece	=	1;			//设置当前为数据接收状态
 					gBUartLen	=	0;			//清字节个数计数器
-					gWUartRxdTimeOut = PACKAGE_RXD_TIMEOUT;	//设置一个数据包接收超时时间
+					gWUartRxdTimeOut = PACKAGE_RXD_TIMEOUT; //设置一个数据包接收超时时间
 				}
 				gBUartLen++;
 			}

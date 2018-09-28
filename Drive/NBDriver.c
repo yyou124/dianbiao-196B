@@ -126,7 +126,6 @@ unsigned char ATcmd_Transmit(unsigned char *AT_str, char *Repl_str, unsigned int
 					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
 					//g_NB.InitCount = 0;//重置计数器
 					g_NB.UARTReceiveOK = 0;
-					REN = 1;
 					ClearBUFF(UartRxBuf,countof(UartRxBuf));
 					return 0;
 				}
@@ -143,7 +142,6 @@ unsigned char ATcmd_Transmit(unsigned char *AT_str, char *Repl_str, unsigned int
 		RSTSTAT &= Bin(11111000);//清看门狗
 	}
 	g_NB.UARTReceiveOK = 0;
-	REN = 1;
 	//g_NB.InitCount++;
 	ClearBUFF(UartRxBuf,countof(UartRxBuf));
 	return 1;
@@ -190,7 +188,6 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
 					//g_NB.InitCount = 0;//重置计数器
 					g_NB.UARTReceiveOK = 0;
-					REN = 1;
 					ClearBUFF(UartRxBuf,countof(UartRxBuf));
 					return 0;
 				}
@@ -206,7 +203,6 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 		RSTSTAT &= Bin(11111000);//清看门狗
 	}
 	g_NB.UARTReceiveOK = 0;
-	REN = 1;
 	//g_NB.InitCount++;
 	ClearBUFF(UartRxBuf,countof(UartRxBuf));
 	return 1;
@@ -254,7 +250,6 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
 					//g_NB.InitCount = 0;//重置计数器
 					g_NB.UARTReceiveOK = 0;
-					REN = 1;
 					ClearBUFF(UartRxBuf,countof(UartRxBuf));
 					return 0;
 				}
@@ -270,81 +265,36 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 	}
 	//g_NB.InitCount ++;
 	g_NB.UARTReceiveOK = 0;
-	REN = 1;
 	ClearBUFF(UartRxBuf,countof(UartRxBuf));
 	return 1;
 
 }
 /*******************************************************************************************
-** 函数名称: NBdata_Receive_MTK
+** 函数名称: NBdata_Receive
 ** 函数描述: nb模块接收到的数据
 ** 输入参数: *Repl_str UART接收到的数据string		*Get_str 读出的数据HEX格式	*len 接收的数据长度
 ** 输出参数: 是否成功接收到数据
 *******************************************************************************************/
-//+QLWDATARECV: 19,1,0,27,01010000000000000011001F16
-unsigned char NBdata_Receive_MTK(char *Repl_str, unsigned char *Get_str, unsigned char *len)
+unsigned char NBdata_Receive(unsigned char *Repl_str, unsigned char *Get_str, unsigned char *len)
 {
-    //假定为透传模式，平台发送数据为112233
-    //BC26模块输入形式： "\r\n+QLWDATARECV: 19,1,0,7,112233\r\n"
-     char dest[99];  //必须256
-     char changdu[4]; //接收数据长度可为0-99以内
-     char shuzu[] = {"+QLWDATARECV:"};
-     char shuzu_strlen = strlen(shuzu)-1;
-
-     char fuhao = 0;
-     unsigned char changdu_len = 0;
-     unsigned char Rx_len = 0;
-     unsigned char shuzu_len = 0;
-     unsigned char i;
-     //RSTSTAT &= Bin(11111000); //清看门狗while(Wait_ms>(NBCount10ms*10))
-     while(1)
-     {
-         while (Repl_str[Rx_len] == shuzu[shuzu_len]) //对比一个字符
-         {
-             if (shuzu_len == shuzu_strlen) //所有期待值都符合
-             {
-                 while(Rx_len<MAX_UART_DATA_LEN+1)
-                 {
-                    if(Repl_str[Rx_len] == ',') //","个数查询
-                    {
-                        fuhao++;
-                    }
-                    Rx_len++;
-                    if((fuhao == 3)&&(Repl_str[Rx_len] != ','))  //接收长度数据
-                    {
-                            changdu[changdu_len] = Repl_str[Rx_len];
-                            changdu_len++;
-                    }
-                    if(fuhao == 4) //接收数据
-                    {
-                         *len = (StrToInt(changdu)-1)/2;
-                         Rx_len++;
-                         for (i = 0;i<((*len)*2);i++)
-                         {
-                            dest[i] = Repl_str[Rx_len];
-                            Rx_len++;
-                         }
-                         StringToHexGroup(Get_str, dest, (*len)*2); //将数据转换为HEX格式
-                         return 1;
-                    }
-                    if (Rx_len > MAX_UART_DATA_LEN + 1)
-                    return 0;
-                 }
-             }
- //            RSTSTAT &= Bin(11111000); //清看门狗
-             Rx_len++;
-             shuzu_len++;
-//             printf("运行到这里\r\n");
-             if (Repl_str[Rx_len] != shuzu[shuzu_len])
-             break; //不符合，跳出
-         }
- //        RSTSTAT &= Bin(11111000); //清看门狗
-         shuzu_len = 0;
-         Rx_len++;
-//         printf("运行到这里\r\n");
-         if (Rx_len > MAX_UART_DATA_LEN + 1)
-         return 0;
-     }
+	char *p;
+	unsigned char flag = 0;
+	p = strtok((char *)Repl_str, ":");//分离收到的字符串
+	if(strcmp(p,NB_DATA_RECEIVE))//判断前缀格式
+	{
+		flag = 0;
+		//*len = 0;
+	}
+	else
+	{
+		p = strtok(NULL, ":");//取后半段
+		p = strtok(p,",");
+		p = strtok(NULL, ",");//取后半段
+		StringToHexGroup(Get_str, p, strlen(p));//将字符串转换为HEX输出
+		*len = strlen(p) / 2;//返回HEX长度
+		flag = 1;
+	}
+	return flag;
 }
 /*******************************************************************************************
 ** 函数名称: NB_Init
@@ -359,7 +309,7 @@ void NB_Init(void)
 	char p[32];
 	unsigned char recivedata[64];
 	char imei[16];
-	unsigned char temp;
+
 	char *dest = p;
 
 	if(g_NB.ReInitTime||!g_NB.InitStep)//没有到初始化时间，或者初始化结束
@@ -401,7 +351,7 @@ void NB_Init(void)
 			case 2:
 			{
 				g_NB.InitCount ++;
-				g_NB.ReInitTime = 10;	//2秒后进行初始化
+				g_NB.ReInitTime = 2;	//2秒后进行初始化
 				sprintf(dest,"AT+CGPADDR=1\r\n");		//查询模块联网状态
 				if(!NBstate_Receive(dest,"+CGPADDR:",recivedata,2000))
 				{
@@ -421,13 +371,8 @@ void NB_Init(void)
 				{
 
 					strncpy((char *)imei, (char *)recivedata, 15);	//取得IEMI号码15位，
-
 					imei[15] = '\0';//加一位结束符"\0"
-					temp = strlen(imei);
-					if(strlen(imei) == 15)
-						g_NB.InitStep = 4;		//进行初始化步骤4
-					else
-						g_NB.InitStep = 3;
+					g_NB.InitStep = 4;		//进行初始化步骤4
 					break;
 				}
 				else

@@ -718,8 +718,8 @@ void Init_RAM(void)
     //检查EEPROM中首次上电标志，首次上电自动进入工厂模式,启动校表程序
 	//如果EEPROM中的EE_FirstProg_FLAG第一次上电标志不为0xA5(4byte)
 //	//则gbFgKeyProg = 0xF001，启动校表程序
-//	MemInitSet(&g_Buffer[0], 0x00, 4);
-//	VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
+MemInitSet(&g_Buffer[0], 0x00, 4);
+VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
 	EE_to_RAM(EE_FirstProg_FLAG, &g_Buffer[0], 4);
     if ((g_Buffer[0] != 0xA5) && (g_Buffer[1] != 0xA5) && (g_Buffer[2] != 0xA5) && (g_Buffer[3] != 0xA5))
     {

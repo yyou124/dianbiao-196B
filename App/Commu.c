@@ -544,15 +544,8 @@ void CommuProcess(void)
 	unsigned char DataRecieve[256];
 	unsigned char len;
 	unsigned char nb_receive_len;
-	unsigned char tempp[64];
-	unsigned char temp[64] = "\r\n+QLWDATARECV: 19,1,0,27,01010000000000000011001F19\r\n";
-	//test
 
-//	g_NB.UARTReceiveOK = 1;
-//NB_LORA[0] = 0xBB;
-//NB_LORA[1] = 0xBB;
-//g_NB.InitState[0] = NB_Init_OK;
-//g_NB.InitState[1] = NB_Init_OK;
+
 	//没有到自动上报时间或者没有收到数据
 	if(!(g_Tran.AutoReportFlag ||g_NB.UARTReceiveOK))
 	{
@@ -600,21 +593,17 @@ void CommuProcess(void)
 		{
 			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
 			{
-				for(len=0;len<gBUartLen;len++)
-					tempp[len] = UartRxBuf[len];
-				//检查匹配标识，并输出转换为HEX格式输出
-
-				//NBdata_Receive_MTK((char *)temp,DataRecieve, (unsigned char *)&nb_receive_len);
-				NBdata_Receive_MTK((char *)tempp,DataRecieve, (unsigned char *)&nb_receive_len);
-				//g_NB.DataReceiveOK = NBdata_Receive_MTK((char *)UartRxBuf,DataRecieve, (unsigned char *)&nb_receive_len);
-				if (g_NB.DataReceiveOK == 1)
+				//待修改
+				g_NB.DataReceiveOK = NBdata_Receive(UartRxBuf, DataRecieve, (unsigned char *)&nb_receive_len);
+				if(g_NB.DataReceiveOK == 0)	return;//收到的不是协议数据
+				else if (g_NB.DataReceiveOK == 1)
 				{
 					len = Commu_Recive_Process(DataRecieve,DataBuild,nb_receive_len);
+					//待修改
 					NBdata_Transmit(DataBuild,len,"OK",2000);	//发送自动上报数据
 				}
 			}
 		}
-		REN = 1;
 	g_NB.DataReceiveOK = 0;
 	g_NB.UARTReceiveOK = 0;
 	}/*接收进程 finish*/

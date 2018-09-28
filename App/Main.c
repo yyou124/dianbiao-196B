@@ -45,9 +45,10 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 //unsigned char temp[18] = {0x11,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18};
 //unsigned char temp_read[18] = {0x00,0x00};
 //unsigned char temp[10] = {0x12,0x12,0x13,0x04};
-//unsigned char DataRecieve[256];
-//	unsigned char nb_receive_len;
-//	 unsigned char temp[] = "\r\n+QLWDATARECV: 19,1,0,27,01010000000000000011001F19\r\n";
+//_Fdata Test;
+//_Fdata Test1;
+//float test3 = 0.0;
+// float ftemp;
 void main(void)
 {
 	IEN0 = 0x00;                        //关闭总中断，ADC和TPS中断，定时器0、1、2中断，外部1中断，串口0中断
@@ -80,37 +81,43 @@ EMU         EEMU(EMU总中断，在Init_EMU中启用)PF脉冲中断
 
 	while (1)
 	{
-	//	NBdata_Receive_MTK((char *)temp,DataRecieve, (unsigned char *)&nb_receive_len);
-	//E_to_RAM(EE_PROG_FLAG, &temp[4], 3);
+//		Test.y = 100.9;
+//		SEQ_write(0x00,&Test.Buffer[0],4);
+//		EE_to_RAM(0x00,&Test1.Buffer[0],4);
+//if (VER_RDbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4) == 0)
+//{
+//    adjust_data_f.power2gain.y = 22.0;
+//}
+//test3 = adjust_data_f.power2gain.y;
+//EE_to_RAM(EE_PROG_FLAG, &temp[4], 3);
 
-        if((g_Flag.Run & F_PWRUP) == 0) //首次上电
-        {
-            ACModeWDTProc();            //AC模式喂狗                修改完成
-            Change32KToPLL();           //时钟频率控制4.096MHz       修改完成
-            Init_IO();                  //IO口初始化                修改完成
-            Init_Uart();                //UART初始化                修改完成
-            PWONInit_LCD();             //LCD初始化
-            Init_RTC();                 //RTC初始化                 修改完成
-            Init_RAM();                 //一些参数的初始化           修改完成，校表代码已被注释掉
-            g_Flag.Run |= F_PWRUP;      //置上电的标志
-            Init_Timer();               //TIME初始化                修改完成
-            ReadRTCProc();              //读RTC处理                 修改完成
-            CheckRTC();                 //RTC校验处理                修改完成
-            if((LPDCON & 0x08) == 0x08) //VCC>2.7V
-            {
-                Init_EMU();             //初始化EMU                  修改完成
-            }
-            else                        //VCC<2.7V
-            {
-                g_Flag.Run &= ~F_PWRUP; //置下电的标志
-            }
-            //启用LPD中断,主程序不需要
+if ((g_Flag.Run & F_PWRUP) == 0) //首次上电
+{
+    ACModeWDTProc();             //AC模式喂狗                修改完成
+    Change32KToPLL();            //时钟频率控制4.096MHz       修改完成
+    Init_IO();                   //IO口初始化                修改完成
+    Init_Uart();                 //UART初始化                修改完成
+    PWONInit_LCD();              //LCD初始化
+    Init_RTC();                  //RTC初始化                 修改完成
+    Init_RAM();                  //一些参数的初始化           修改完成，校表代码已被注释掉
+    g_Flag.Run |= F_PWRUP;       //置上电的标志
+    Init_Timer();                //TIME初始化                修改完成
+    ReadRTCProc();               //读RTC处理                 修改完成
+    CheckRTC();                  //RTC校验处理                修改完成
+    if ((LPDCON & 0x08) == 0x08) //VCC>2.7V
+    {
+        Init_EMU(); //初始化EMU                  修改完成
+    }
+    else //VCC<2.7V
+    {
+        g_Flag.Run &= ~F_PWRUP; //置下电的标志
+    }
+    //启用LPD中断,主程序不需要
 
-            //CheckPowerOff();//掉电检测，此处仅检测VCC<2.7v  修改完成
+    //CheckPowerOff();//掉电检测，此处仅检测VCC<2.7v  修改完成
         }
         else
         {
-					
             ACModeWDTProc();            //AC MODE WDT PROC            修改完成
             EA = 1;
             //监测中断

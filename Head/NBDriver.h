@@ -32,7 +32,7 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 #define		SERVER_PORT				"5683"				//NB模块端口
 
 #define     CON_SENDING_STATUS		"AT+QLWULDATASTATUS?\r\n"	//查询NB数据发送情况
-#define		NB_DATA_RECEIVE			"QLWDATARECV"				//NB平台下发数据前缀
+#define		NB_DATA_RECEIVE			"+NNMI"				//NB平台下发数据前缀
 
 #define		LWM2M_STATUS_1			"MO_DATA_ENABLED"	//能够发送数据
 #define		LWM2M_STATUS_2			"NO_UE_IP"			//无能发送数据
@@ -84,7 +84,7 @@ extern void 		 NBdata_SendString(unsigned char *TXStr,unsigned char len, char *f
 extern unsigned char ATcmd_Transmit(unsigned char *AT_str,char *Repl_str,unsigned int Wait_ms);
 extern unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *Repl_str,unsigned int Wait_ms);
 extern unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str, unsigned char *Get_str, unsigned int Wait_ms);
-extern unsigned char NBdata_Receive_MTK(char *Repl_str, unsigned char *Get_str, unsigned char *len);
+extern unsigned char NBdata_Receive(unsigned char *Repl_str, unsigned char *Get_str, unsigned char *len);
 
 
 //extern void 		   NBdata_Transmit_Porcess(unsigned char *TX_str,unsigned char TX_len);

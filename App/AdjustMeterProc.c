@@ -87,20 +87,17 @@ void AdjustMeterInit(void)
                 val.val = adjust_data.icont;
                 WriteEMU_REG(ICONT,val);
 
-				//adjust_data.adcos = 0;
-				// adjust_data.irms1os = 0;
-				// adjust_data.irms2os = 0;
-				//adjust_data.nmgain = 0x0000;
 				adjust_data.vgain = 0x0000;
-				//adjust_data.irms1gain = 0x0000;
 				adjust_data.irms2gain = 0x0000;
-				adjust_data.power2gain = 0x0000;
-				//将用电量清零
-                MemInitSet(&kwh_value.integer[0],0x00,5);
-				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5,1);
+				// adjust_data.power2gain = 0x0000;
+                adjust_data_f.power2gain.y = 0.0; //换成浮点数
+                //将用电量清零
+                MemInitSet(&kwh_value.integer[0], 0x00, 5);
+                VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5,1);
 				//带校验向EEPROM写入校表
 				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);
-                MemInitSet(&g_CalTmp.Buffer[0],0x00,sizeof(g_CalTmp));
+                VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1);
+                MemInitSet(&g_CalTmp.Buffer[0], 0x00, sizeof(g_CalTmp));
                 g_Cal.Step++;
                 break;
             }
@@ -201,12 +198,12 @@ void AdjustMeterInit(void)
 				//求电压换算系数
 				//adjust_temp = (float)g_CalTmp.Offset.VBuf;
 				//adjust_temp = adjust_temp/220;
-				adjust_data.vgain = g_CalTmp.Offset.VBuf/220;
-				//求电流换算系数
+                adjust_data.vgain = g_CalTmp.Offset.VBuf / 220;
+                //求电流换算系数
 				//adjust_temp = (float)g_CalTmp.Offset.I2Buf/5;
-				adjust_data.irms2gain = g_CalTmp.Offset.I2Buf/5;
+                adjust_data.irms2gain = g_CalTmp.Offset.I2Buf / 5; 
 				//求功率换算系数
-				adjust_data.power2gain = g_CalTmp.Offset.P2Buf/1100;
+				adjust_data_f.power2gain.y = g_CalTmp.Offset.P2Buf / 1100.0;
                 //Store the parameter into adjust_data struct
                 /* adjust_data.irms1os = g_CalTmp.Offset.I1Buf;
                 val.val = adjust_data.irms1os;
@@ -226,7 +223,7 @@ void AdjustMeterInit(void)
 
                 //Write all the calibration parameter into EEPROM
                 VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
-
+                VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1);//浮点数写入
                 //g_Cal.Key = 0x00;
                 //g_Cal.Step = 0x00;
 

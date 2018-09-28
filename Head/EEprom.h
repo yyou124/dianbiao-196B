@@ -60,7 +60,7 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 
 /*-------------------------------外部EEPROM使用情况----------------------------------------*/
 #define EE_BAKADDR        	0x0080U                 //EEPROM数据备份地址
-//总用电量地址  5+2字节      0x0001~0x0007
+//总用电量地址  5+2字节                     0x0001~0x0007
 #define	EE_KWH0				0x0001					//当前总有功电量整数低位
 #define	EE_KWH1				EE_KWH0+1 				//5+2
 #define	EE_KWH2				EE_KWH1+1
@@ -69,21 +69,24 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define	EE_KWHSUM			EE_KWH4+1               //SUM校验码
 #define	EE_KWHXOR			EE_KWHSUM+1				//XOR校验码
 
-//校表参数 15+2字节          0x0020~0x0030
+//校表参数(不包括浮点数) 13+2字节           0x0020~0x002C
 #define ADJ_ADDR    		0x0020u        		    //校表参数
-#define	ADJ_ADDR_SUM		ADJ_ADDR+15             //校验码
-#define	ADJ_ADDR_XOR		ADJ_ADDR+15			    //XOR校验码
-//编程标志  2+2字节          0x0040~0x0043
-#define	EE_PROG_FLAG		0x0040u
-//第一次上电标志 4+2字节      0x0045~0x004A
-#define	EE_FirstProg_FLAG	0x0045u
-//继电器通断电标志 2+2字节    0x004C~0x004F
+#define	ADJ_ADDR_SUM		ADJ_ADDR+13             //校验码
+#define	ADJ_ADDR_XOR		ADJ_ADDR+13			    //XOR校验码
+
+//编程标志  2+2字节                        0x003C~0x003F
+#define EE_PROG_FLAG        0x003Cu
+//校表参数(浮点型)--功率 4+2字节            0x0040~0x0045
+#define ADJ_ADDR_POWER2GAIN 0x0040u
+//第一次上电标志 4+2字节                    0x0046~0x004B
+#define	EE_FirstProg_FLAG	0x0046u
+//继电器通断电标志 2+2字节                  0x004C~0x004F
 #define RELAY_STATUS        0x004C                  //当前设备继电器状态
-//通讯模块安装标志 2+2字节    0x0051~0x0054
+//通讯模块安装标志 2+2字节                  0x0051~0x0054
 #define EE_NB_LORA          0x0051                  // LORA=>AA NB=> BB
-//NB初始化状态 2+2字节       0x0057~0x005A
+//NB初始化状态 2+2字节                      0x0057~0x005A
 #define EE_NB_STATE         0x0057
-//通信地址  6+2字节          0x0060~0x0067
+//通信地址  6+2字节                         0x0060~0x0067
 #define EE_Meter_address	0x0060
 //厂家编号  1字节
 #define EE_Meter_Factory    0x0069

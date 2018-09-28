@@ -95,20 +95,20 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 // #define RQKWHD      rqkwh_value.dec
 // #define RQKWH       rqkwh_value.integer
 
-
-
+typedef union {
+    float y;
+    unsigned char Buffer[4];
+} _Fdata;//浮点型联合体定义
 
 typedef struct{
                 unsigned char  gain;	  //初始增益
 				unsigned int   icont;	  //初始调试分频系数
 
                 unsigned int   vgain;     //瞬时电压增益
-
                 //unsigned int   irms1gain; //通道1瞬时电流增益
-                unsigned int   irms2gain; //通道2瞬时电流增益
-                unsigned int   power2gain;  //瞬时功率增益
+                unsigned int irms2gain;  //通道2瞬时电流增益
 
-				//unsigned int   w1gain;	  //通道1的功率修正	 //看下正偏多还是负偏多,0xa6/0xffff=0.0025 ,(0xffff-0xf6ea)/0xffff=0.03
+                //unsigned int   w1gain;	  //通道1的功率修正	 //看下正偏多还是负偏多,0xa6/0xffff=0.0025 ,(0xffff-0xf6ea)/0xffff=0.03
                 unsigned int   w2gain;	  //通道2的功率修正
 
 				//unsigned int   p1cal;	  //通道1的相位修正
@@ -132,6 +132,12 @@ typedef struct{
 //				unsigned char  mc[3];	  //脉冲常数
 
 }__ADJUST_DATA;											//24
+
+typedef struct
+{
+                // unsigned int power2gain; //瞬时功率增益
+                _Fdata power2gain; //瞬时功率增益值较小，使用浮点数提高精度
+}__ADJUST_DATA_F;   //存储浮点型的交表参数
 
 typedef struct
 {
@@ -264,6 +270,7 @@ MEASUREPROC_EXT EVENTDLY xdata g_EventDly;
 
 MEASUREPROC_EXT uint8 meter_const;				   		//电表常数
 MEASUREPROC_EXT CONSTPARA xdata g_ConstPara;
+MEASUREPROC_EXT __ADJUST_DATA_F xdata adjust_data_f;    //浮点型校表参数
 MEASUREPROC_EXT __ADJUST_DATA xdata adjust_data;	 	//校表参数
 
 MEASUREPROC_EXT M_CLK xdata g_Clk;
