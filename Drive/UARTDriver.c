@@ -183,30 +183,30 @@ void EUART0_ISP(void) interrupt 4
 void EUART1_ISP(void) interrupt 11
 {
 	EA	=	0;
-	if(TI1)										//transmit work end event.
-	{
-		TI1	=	0x00;
-		if(gbUartTran1)								//是否正在发送中
-		{
-			/*-----------------发送未完成------------------*/
-			if(gBUartLen1 <gBUartTotalByte1)
-			{
-				SBUF1	=	UartTxBuf1[gBUartLen1];		//将要发送数据载入到外部数据累加器中
-				//TB8	=	P;							//载入奇偶校验位
-				//SBUF=	ACC;						//载入要发送的数据
-				gBUartLen1++;						//字节个数计数加一
-			}
-			/*-----------------发送已完成------------------*/
-			else
-			{
+	// if(TI1)										//transmit work end event.
+	// {
+	// 	TI1	=	0x00;
+	// 	if(gbUartTran1)								//是否正在发送中
+	// 	{
+	// 		/*-----------------发送未完成------------------*/
+	// 		if(gBUartLen1 <gBUartTotalByte1)
+	// 		{
+	// 			SBUF1	=	UartTxBuf1[gBUartLen1];		//将要发送数据载入到外部数据累加器中
+	// 			//TB8	=	P;							//载入奇偶校验位
+	// 			//SBUF=	ACC;						//载入要发送的数据
+	// 			gBUartLen1++;						//字节个数计数加一
+	// 		}
+	// 		/*-----------------发送已完成------------------*/
+	// 		else
+	// 		{
 
-				gBUartLen1		 = 0x00;				//清字节个数计数器
-				gBUartTotalByte1 = 0x00;				//清数据字节总数寄存器
-				gbUartTran1	     = 0;				//清发送状态标志
-				REN1 = 1;							//允许接收
-			}
-		}
-	}
+	// 			gBUartLen1		 = 0x00;				//清字节个数计数器
+	// 			gBUartTotalByte1 = 0x00;				//清数据字节总数寄存器
+	// 			gbUartTran1	     = 0;				//清发送状态标志
+	// 			REN1 = 1;							//允许接收
+	// 		}
+	// 	}
+	// }
 
 	if(RI1)										//receive one byte event.
 	{
@@ -260,7 +260,7 @@ void	UartRxdTimeout(void)
 			gbUartRece = 0;							//清接收数据状态标志
 			gbUartTran = 0;							//清发送数据状态标志
 			gbUartRxdFrameReq = 1;					//设置接收完一个数据包标志
-			g_NB.UARTReceiveOK = 1;
+			//g_NB.UARTReceiveOK = 1;
 			REN = 0;								//禁止接收
 		}
 	}
@@ -279,6 +279,7 @@ void	UartRxdTimeout(void)
 		}
 	}
 }
+
 
 
 /****************************************************************************
@@ -333,7 +334,7 @@ void UART1Process(void)
 //	gbUartRxdFrameReq1 = 1;
 	if(_testbit_(gbUartRxdFrameReq1) )				//是否接收完一个数据包
 	{
-		Uart1Decode();
+		g_NB.UARTReceiveOK = 1;
 
 	}
 }
@@ -365,23 +366,15 @@ unsigned char UARTcmdCheck(unsigned char *Data, unsigned char Num)
 void  UART0_SendString(unsigned char *TXStr,unsigned char len)
 {
 	unsigned char i;
-//	unsigned char tempuart0;
-	//ES0=0;
+
     for(i=0;i<len;i++)
     {
-		//tempuart0 = *TXStr;
-		//UartTxBuf[i]=*TXStr;
 		SBUF=*TXStr;
-    while(!TI);
-     TI=0;
+    	while(!TI);
+     	TI=0;
 		TXStr++;
     }
-//	gBUartTotalByte = len;
-//	gBUartCon  = Bin(00000000);
-//	gbUartTran = 1;									//设置发送数据状态标志
-//	TI = 1;
-		REN = 1;
-   // ES0=1;
+	REN = 1;
 }
 /*******************************************************************************************
 ** 函数名称: UART0_SendString_Limit
@@ -421,22 +414,22 @@ void  UART0_SendString_Limit(unsigned char *TXStr,unsigned char len)
 ** 输入参数: 无
 ** 输出参数: 无
 *******************************************************************************************/
-//void  UART1_SendString(unsigned char *TXStr,unsigned char len)
-//{
-//	unsigned char i;
-//	i=0;
-//	IEN1 &= (~0x10); //ES1 = 0;
-//    for(;i<len;i++)
-//    {
-
-//		//UartTxBuf[i]=*TXStr;
-//		SBUF1=*TXStr;
-//        while(TI1==0);
-//        TI1=0;
-//        TXStr++;
-//    }
-//	IEN1 |= 0x10;	//ES1 = 1;
-//}
+void  UART1_SendString(unsigned char *TXStr,unsigned char len)
+{
+	unsigned char i;
+	i=0;
+	IEN1 &= (~0x10); //ES1 = 0;
+    for(;i<len;i++)
+    {
+		//UartTxBuf[i]=*TXStr;
+		SBUF1=*TXStr;
+        while(TI1==0);
+        TI1=0;
+        TXStr++;
+    }
+	REN1 = 1;							//允许接收
+	IEN1 |= 0x10;	//ES1 = 1;
+}
 /*******************************************************************************************
 ** 函数名称: ClearBUFF
 ** 函数描述: Buff清零
@@ -506,7 +499,7 @@ unsigned char write_flag;
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
 			gBUartTotalByte1 = 2+UartRxBuf1[2];
-			gBUartLen1		= 0x00;
+			UART1_SendString(UartRxBuf1,gBUartTotalByte1);
 		}
 		else if(UartRxBuf1[1] == 0x02)//写
 		{
@@ -521,8 +514,11 @@ unsigned char write_flag;
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
 			gBUartTotalByte1 = 2+UartRxBuf1[2];
-			gBUartLen1		= 0x00;
+			UART1_SendString(UartRxBuf1,gBUartTotalByte1);
 		}
+		gBUartCon1  = Bin(00000000);
+		gbUartTran1 = 1;									//设置发送数据状态标志
+		TI1 = 1;											//软件置一，中断响应
 	}
 	else if(UartRxBuf1[0] == 0xED)//操作EMU寄存器
 	{
@@ -536,7 +532,7 @@ unsigned char write_flag;
 			UartTxBuf1[2] = val.TBuf.buf2;
 			UartTxBuf1[2] = val.TBuf.buf3;
 			gBUartTotalByte1 = 6;
-			gBUartLen1		= 0x00;
+			UART1_SendString(UartRxBuf1,gBUartTotalByte1);
 		}
 		else if(UartRxBuf1[1] == 0x02)//写
 		{
@@ -548,8 +544,11 @@ unsigned char write_flag;
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
 			gBUartTotalByte1 = 2;
-			gBUartLen1		= 0x00;
+			UART1_SendString(UartRxBuf1,gBUartTotalByte1);
 		}
+		gBUartCon1  = Bin(00000000);
+		gbUartTran1 = 1;									//设置发送数据状态标志
+		TI1 = 1;											//软件置一，中断响应
 	}
 	else if(UartRxBuf1[0] == 0xFD)
 	{
@@ -605,7 +604,10 @@ unsigned char write_flag;
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
 			gBUartTotalByte1 = 2;
-			gBUartLen1		= 0x00;
+			UART1_SendString(UartRxBuf1,gBUartTotalByte1);
+			gBUartCon1  = Bin(00000000);
+			gbUartTran1 = 1;									//设置发送数据状态标志
+			TI1 = 1;											//软件置一，中断响应
 		}
 	}
 	else if(UartRxBuf1[0] == 0xFE)//校表写入
@@ -647,15 +649,15 @@ unsigned char write_flag;
 			}
 		}
 		gBUartTotalByte1 = 3;							//设置发送字节数为4个
-		gBUartLen1		= 0x00;							//清字节个数计数器
+		UART1_SendString(UartRxBuf1,gBUartTotalByte1);
 		UartTxBuf1[0] = 0xFE;	//帧头
 		if(write_flag)	UartTxBuf1[1] = 0x02;
 		else	UartTxBuf1[1] = 0x82;
 		UartTxBuf1[2] = UartRxBuf1[2];
+		gBUartCon1  = Bin(00000000);
+		gbUartTran1 = 1;									//设置发送数据状态标志
+		TI1 = 1;											//软件置一，中断响应
 	}
-	gBUartCon1  = Bin(00000000);
-	gbUartTran1 = 1;									//设置发送数据状态标志
-	TI1 = 1;											//软件置一，中断响应											//软件置一，中断响应
 }
 
 

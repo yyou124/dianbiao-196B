@@ -85,7 +85,7 @@ UARTDRIVER_EXT  void Uart1Decode(void);
 UARTDRIVER_EXT  unsigned char UARTcmdCheck(unsigned char *Data, unsigned char Num);
 UARTDRIVER_EXT  void  UART0_SendString(unsigned char *TXStr,unsigned char len);
 UARTDRIVER_EXT void  UART0_SendString_Limit(unsigned char *TXStr,unsigned char len);
-//UARTDRIVER_EXT  void  UART1_SendString(unsigned char *TXStr,unsigned char len);
+UARTDRIVER_EXT  void  UART1_SendString(unsigned char *TXStr,unsigned char len);
 UARTDRIVER_EXT unsigned char  CmpBUFF(unsigned char *data1, unsigned char *data2, unsigned int len);
 UARTDRIVER_EXT  void ClearBUFF(unsigned char *cleardata, unsigned int len);
 //UARTDRIVER_EXT void test_nb(void);
@@ -108,9 +108,10 @@ UARTDRIVER_EXT unsigned int  volatile xdata Adj_Error;//Uart误差XX.XX%
 UARTDRIVER_EXT unsigned char xdata gbUartAdjust;//通讯校表启动标志
 
 
-extern unsigned char 	UartTxBuf[MAX_UART_DATA_LEN];				//接收数据缓冲器
-extern unsigned char   UartRxBuf[MAX_UART_DATA_LEN];				//发送数据缓冲器
+extern unsigned char 	UartTxBuf1[MAX_UART_DATA_LEN];				//接收数据缓冲器
+extern unsigned char   UartRxBuf1[MAX_UART_DATA_LEN];				//发送数据缓冲器
 extern unsigned char data	gBUartLen;									//字节个数计数器
+extern unsigned char data	gBUartLen1;									//字节个数计数器
 extern unsigned int data	gWUartRxdTimeOut;							//传送一个数据包超时计时器
 /*
 UARTDRIVER_EXT unsigned char UART_Rx_Flag;

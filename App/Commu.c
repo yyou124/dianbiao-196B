@@ -575,9 +575,9 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 void CommuProcess(void)
 {
 	unsigned char DataBuild[256];
-	unsigned char DataRecieve[256];
+	//unsigned char DataRecieve[256];
 	unsigned char len;
-	unsigned char nb_receive_len;
+//	unsigned char nb_receive_len;
 	//test
 //unsigned char temp[64] = "\r\n+QLWDATARECV: 19,1,0,27,01010000000000000012001E16\r\n";
 //g_NB.UARTReceiveOK = 1;
@@ -605,20 +605,10 @@ void CommuProcess(void)
         else//建立自动上报数据
 		    len = ProtocolReport(DataBuild,NB_PROTOCOL_JICHAO);
 
-		if((NB_LORA[0] == 0xAA)&&(NB_LORA[1] == 0xAA))//安装LORA模块
-		{
-			UART0_SendString_Limit(DataBuild,len);//发送数据
-		}
-		else if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))	//安装NB模块
-		{
-			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
-			{
-				//检查NB模块硬件状态
-            	//NB_LORA_PANDUAN(&NB_LORA[0]);
-				NB_Error();
-				NBdata_Transmit(DataBuild,len,"OK",2000);	//发送自动上报数据
-			}
-		}
+
+		UART1_SendString(DataBuild,len);//发送数据
+
+
 		//不配置ACK回应
 		g_Tran.AutoReportFlag = 0;
 		//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
@@ -635,40 +625,12 @@ void CommuProcess(void)
 	//启动接收进程
 	if(g_NB.UARTReceiveOK == 1)
 	{
+		Uart1Decode();
 
+		len = Commu_Recive_Process(UartRxBuf1,DataBuild,gBUartLen1);
+		UART1_SendString(DataBuild,len);//发送数据
 
-		if((NB_LORA[0] == 0xAA)&&(NB_LORA[1] == 0xAA))//安装LORA模块
-		{
-			len = Commu_Recive_Process(UartRxBuf,DataBuild,gBUartLen);
-			UART0_SendString_Limit(DataBuild,len);//发送数据
-		}
-		else if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))	//安装NB模块
-		{
-			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
-			{
-//				g_NB.DataReceiveOK = NBdata_Receive_MTK(temp, DataRecieve, (unsigned char *)&nb_receive_len);
-				g_NB.DataReceiveOK = NBdata_Receive_MTK(UartRxBuf, DataRecieve, (unsigned char *)&nb_receive_len);
-				if(g_NB.DataReceiveOK == 0)
-				{
-					REN = 1;
-					g_NB.DataReceiveOK = 0;
-					g_NB.UARTReceiveOK = 0;
-					return;//收到的不是协议数据
-				}
-				else if (g_NB.DataReceiveOK == 1)
-				{
-					len = Commu_Recive_Process(DataRecieve,DataBuild,nb_receive_len);
-					//检查NB模块硬件状态
-					if(!len)//需要返回数据
-					{
-						//NB_LORA_PANDUAN(&NB_LORA[0]);
-						NB_Error();
-						NBdata_Transmit(DataBuild,len,"OK",2000);	//发送上报数据
-					}
-				}
-			}
-		}
-	REN = 1;
+	REN1 = 1;
 	g_NB.DataReceiveOK = 0;
 	g_NB.UARTReceiveOK = 0;
 	}/*接收进程 finish*/
