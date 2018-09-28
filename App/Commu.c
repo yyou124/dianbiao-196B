@@ -31,6 +31,7 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 #include "Headconfig.h"
 
 M_Transimt g_Tran;
+M_Commu g_Commu;
 /****************************************************************************
 ** 函数名称: ProtocolReport
 ** 函数描述: 协议数据组装函数  集抄
@@ -42,16 +43,10 @@ unsigned char ProtocolReport(unsigned char *DataBuild, unsigned char item)
     unsigned char buf[6];
 	unsigned char protocol_len;
     //帧头
-	buf[0] = 0x00;
-	buf[1] = 0xAA;
-	buf[2] = 0x72;
-	buf[3] = 0x00;
-	buf[4] = 0x00;
-	//buf[0] = NB_FRAME_HEAD_1;
-	//buf[1] = NB_FRAME_HEAD_2;
+	buf[0] = NB_FRAME_HEAD_1;
+	buf[1] = NB_FRAME_HEAD_2;
 	memcpy (&DataBuild[0],&buf[0],NB_FRAME_HEAD_NUM);
 	protocol_len = NB_FRAME_HEAD_NUM;//2
-	//protocol_len = 5;
 	//表号
 	MemInitSet(&buf[0],0x00,6);//buff清零
 	memcpy(&buf[0],&param_data.meter_address[0],6);
@@ -111,12 +106,12 @@ unsigned char ProtocolReport(unsigned char *DataBuild, unsigned char item)
             protocol_len += 4;
             //功率因数
             MemInitSet(&buf[0],0x00,4);
-            ReverseCpy(&buf[0],&g_InsBCD.PowerFactor[0],4);
+            ReverseCpy(&buf[0],&g_InsBCD.PowerFactor[0],2);
             memcpy(&DataBuild[protocol_len], &buf[0], 4);
             protocol_len += 4;
             //日期
             MemInitSet(&buf[0],0x00,6);
-						GetRealTime();	//读RTC处理
+			GetRealTime();	//读RTC处理
             memcpy(&buf[0],&_UINT8_RTC[0],6);
             memcpy(&DataBuild[protocol_len], &buf[0], 6);
             protocol_len += 6;
@@ -125,22 +120,13 @@ unsigned char ProtocolReport(unsigned char *DataBuild, unsigned char item)
         default :break;
     }
     //数据长度
-    DataBuild[NB_FRAME_HEAD_NUM+6+1+1] = HEX2BCD(protocol_len -NB_FRAME_HEAD_NUM-6-1-1-1);//减去帧头，长度
-	//校验位
+    DataBuild[2+6+1+1] = HEX2BCD(protocol_len -2-6-1-1-1);//减去帧头，长度
+    //校验位
 	DataBuild[protocol_len] = UARTcmdCheck(&DataBuild[0], protocol_len);
 	protocol_len++;
 	//结束符
 	DataBuild[protocol_len] = 0X16;
 	protocol_len++;
-	//禾苗多余位补充
-		buf[0] = 0xFF;
-		buf[1] = 0xFF;
-		buf[2] = 0xFF;
-		buf[3] = 0xFF;
-		buf[4] = 0xFF;
-		memcpy (&DataBuild[protocol_len],&buf[0],5);
-		protocol_len += 5;//2
-
 	return protocol_len;
 }
 /****************************************************************************
@@ -277,7 +263,7 @@ unsigned char ProtocolBuild(unsigned char item, unsigned char *DataBuild)
 			DataBuild[protocol_len] = buf[0];
 			protocol_len++;
 			MemInitSet(&buf[0],0x00,4);
-			ReverseCpy(&buf[0],&g_InsBCD.PowerFactor[0],4);
+			ReverseCpy(&buf[0],&g_InsBCD.PowerFactor[0],2);
 			//memcpy(&buf[0],&g_InsBCD.PowerFactor[0],2);
 			memcpy(&DataBuild[protocol_len], &buf[0], 4);
 			protocol_len += NB_FRAME_DATA_NUM;
@@ -387,7 +373,7 @@ unsigned char Commu_Return_Error(unsigned char *DataBuild, unsigned char item)
 }
 /****************************************************************************
 ** 函数名称: Comm_Recive_Process
-** 函数描述: 协议接收处理函数(响应后台请求)
+** 函数描述: 协议接收处理函数(响应后台)
 ** 输入参数: DataRecieve接收到的数据 	len接收数据的长度
 ** 输出参数: 发送数据长度
 *****************************************************************************/
@@ -432,6 +418,26 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 	//判断命令类型
 	switch(DataRecieve[9])
 	{
+		//后台返回类型判断
+		case NB_ACK_1:
+		{
+			len_trasmit = 0;
+			g_Tran.AutoReportFlag = COUNT_DOWN;
+			g_Tran.AutoReportTime = 0; //重置自动上报尝试次数
+			//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
+			g_Tran.AutoReportCount = g_Commu.AutoReportTimeSet;//重置自动上报时间
+			break;
+		}
+		case NB_ACK_2:
+		{
+			len_trasmit = 0;
+			g_Tran.AutoReportFlag = COUNT_DOWN;
+			g_Tran.AutoReportTime = 0; //重置自动上报尝试次数
+			//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
+			g_Tran.AutoReportCount = g_Commu.AutoReportTimeSet;//重置自动上报时间
+			break;
+		}
+		//后台请求类判断
 		case NB_PROTOCOL_kWh://用电量
 		{
 			len_trasmit = ProtocolBuild(NB_PROTOCOL_kWh, DataBuild);		//建立上报数据
@@ -492,6 +498,7 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 
 			break;
 		}
+		//后台控制类判断
 		case NB_PROTOCOL_Timeservice: //广播授时
 		{
 			memcpy(&_UINT8_RTC[0],&DataRecieve[11],6);//写入时间
@@ -538,6 +545,15 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 			len_trasmit = ProtocolBuild(NB_PROTOCOL_FactoryID, DataBuild);
 			break;
 		}
+		case NB_PROTOCOL_ReportTime: //修改自动上报时间
+		{
+			g_Commu.AutoReportTimeSet = BCD2toINT(&DataRecieve[11]);//自动上报时间
+			g_Commu.AutoReportTimeSetAck = BCD2toINT(&DataRecieve[13]);//ACK相应时间
+			VER_WRbytes(EE_Commu_Time,&DataRecieve[11],4, 1);
+			g_Tran.AutoReportCount = 1;//1分钟后发出自动上报数据
+			len_trasmit = 0;
+			break;
+		}
 		default:
 		{
 			len_trasmit = 0;
@@ -571,12 +587,12 @@ void CommuProcess(void)
 //g_NB.InitState[1] = NB_Init_OK;
 
 	//没有到自动上报时间或者没有收到数据
-	if(!(g_Tran.AutoReportFlag ||g_NB.UARTReceiveOK))
+	if(!((g_Tran.AutoReportFlag == REPORT_TIME) ||g_NB.UARTReceiveOK))
 	{
 		return;
 	}
 	//启动自动上报进程
-	if(g_Tran.AutoReportFlag == 1)
+	if(g_Tran.AutoReportFlag == REPORT_TIME)
 	{
 
         if(g_Tran.PwoerOn)//首次上电
@@ -584,6 +600,7 @@ void CommuProcess(void)
 
             len = ProtocolReport(DataBuild,NB_PROTOCOL_PowerON);
             g_Tran.PwoerOn = 0x00;
+
         }
         else//建立自动上报数据
 		    len = ProtocolReport(DataBuild,NB_PROTOCOL_JICHAO);
@@ -597,12 +614,21 @@ void CommuProcess(void)
 			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
 			{
 				//检查NB模块硬件状态
-            	NB_LORA_PANDUAN(&NB_LORA[0]);
+            	//NB_LORA_PANDUAN(&NB_LORA[0]);
+				NB_Error();
 				NBdata_Transmit(DataBuild,len,"OK",2000);	//发送自动上报数据
 			}
 		}
+		//不配置ACK回应
 		g_Tran.AutoReportFlag = 0;
-		g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
+		//g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
+		g_Tran.AutoReportCount = g_Commu.AutoReportTimeSet;//重置自动上报时间
+		//配置ACK回应
+//		g_Tran.AutoReportTime ++;//尝试次数+1
+//		g_Tran.AutoReportFlag = WAITING_ACK;
+//		//g_Tran.AutoReportCount = NB_AUTO_REPORT_ACk;//设置等待ACK时间
+//		g_Tran.AutoReportCount = g_Commu.AutoReportTimeSetAck;//设置等待ACK时间
+
 		return;
 	}/*自动上报进程finish*/
 
@@ -620,8 +646,8 @@ void CommuProcess(void)
 		{
 			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
 			{
-				//g_NB.DataReceiveOK = NBdata_Receive_MTK(temp, DataRecieve, (unsigned char *)&nb_receive_len);
-				g_NB.DataReceiveOK = NBdata_Receive_HW(UartRxBuf, DataRecieve, (unsigned char *)&nb_receive_len);
+//				g_NB.DataReceiveOK = NBdata_Receive_MTK(temp, DataRecieve, (unsigned char *)&nb_receive_len);
+				g_NB.DataReceiveOK = NBdata_Receive_MTK(UartRxBuf, DataRecieve, (unsigned char *)&nb_receive_len);
 				if(g_NB.DataReceiveOK == 0)
 				{
 					REN = 1;
@@ -629,18 +655,20 @@ void CommuProcess(void)
 					g_NB.UARTReceiveOK = 0;
 					return;//收到的不是协议数据
 				}
-
-
 				else if (g_NB.DataReceiveOK == 1)
 				{
 					len = Commu_Recive_Process(DataRecieve,DataBuild,nb_receive_len);
 					//检查NB模块硬件状态
-            		NB_LORA_PANDUAN(&NB_LORA[0]);
-					NBdata_Transmit(DataBuild,len,"OK",2000);	//发送上报数据
+					if(!len)//需要返回数据
+					{
+						//NB_LORA_PANDUAN(&NB_LORA[0]);
+						NB_Error();
+						NBdata_Transmit(DataBuild,len,"OK",2000);	//发送上报数据
+					}
 				}
 			}
 		}
-		REN = 1;
+	REN = 1;
 	g_NB.DataReceiveOK = 0;
 	g_NB.UARTReceiveOK = 0;
 	}/*接收进程 finish*/
@@ -652,6 +680,7 @@ void CommuProcess(void)
 /* 上传数据，依据协议形式
 低位在前，高位在后
 00 01 			  //帧头
+00 AA 72 00 00
 66 55 44 33 22 11 //表号112233445566
 AA 				  //厂家代码
 72				  //控制字，主动上报
@@ -670,10 +699,9 @@ XX XX XX XX XX XX //日期，6字节 ss mm hh DD MM YY
 CS				  //校验码
 16                //帧结束 */
 
-
 /*
 禾苗
-00 AA 72 00 00//帧头不一样
+00 AA 72 00 00
 A0 A1 A2 A3 A4 A5
 01
 72
@@ -687,8 +715,8 @@ A0 A1 A2 A3 A4 A5
 99 21 00 00
 99 21 00 00
 30 30 11 07 07 18
-FF FF//多余
+FFFF//多余
 00
 16
-FF FF FF//多余
+FFFFFF//多余
 */

@@ -307,14 +307,14 @@ void Init_EMU(void)
 *******************************************************************************************/
 void ReadEMUFromTOEeprom(void)
 {
-    if(VER_RDbytes(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data))==0)
-    //if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data))==0)
+    //if(EE_to_RAM(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data))==0)
+    if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data))==0)
     {
         //最大电流为60A，脉冲常数为1200，因此将脉冲宽度调整为45ms/90 待定
         adjust_data.gain = 0x43;    //不知道有什么用....
         adjust_data.icont = g_ConstPara.Icont;
 
-        adjust_data.vgain = 0x4000;
+        adjust_data.vgain = 22.0;
         //adjust_data.nmgain = 0x4000;
         //adjust_data.irms1gain = 0x4000;
         adjust_data.irms2gain = 0x4000;
@@ -336,10 +336,10 @@ void ReadEMUFromTOEeprom(void)
         //VER_WRbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data), 1);	  //是否在这里要保存默认值，还是放到校表里将所有值初始化，现在校表是校一个就写一个值。
     }
     //加载校表参数（浮点型）
-    if (VER_RDbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4) == 0)
-    {
-        adjust_data_f.power2gain.y = 22.0;
-    }
+    // if (VER_RDbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4) == 0)
+    // {
+    //     adjust_data_f.power2gain.y = 22.0;
+    // }
     //以下代码有什么作用?
 //调整到基准的0.7340到1.4800
     /* if ((adjust_data.vgain < D_vgain_Min) || (adjust_data.vgain > D_vgain_Max))
@@ -527,7 +527,7 @@ void EMUTampProc(void)
 		}
         //tmpval = tmpval * (float)((1.4/0.00018/16.0/8388608.0)*1000.0);
         //tmpval = tmpval * I2_Coefficient;				//(float)0.058;
-		curn_temp = ((float)tmpval / (float)adjust_data.irms2gain);
+        curn_temp = ((float)tmpval / adjust_data.irms2gain);
         tmpval = curn_temp * 1000;
 		curn = tmpval;//>> 14;
 
@@ -562,7 +562,8 @@ void EMUTampProc(void)
             //powern = tmpval * (float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);
             //powern = tmpval * (float)(P1_Coefficient/g_ConstPara.Icont/g_ConstPara.Constant);  //56250000.0
 			//powern = tmpval * 0.0629;
-            powern = (tmpval / adjust_data_f.power2gain.y) * 100;
+            //powern = (tmpval / adjust_data_f.power2gain.y) * 100;
+            powern = tmpval * (float)(P1_Coefficient / g_ConstPara.Icont / g_ConstPara.Constant);
         }
         else
         {
@@ -591,7 +592,10 @@ void EMUTampProc(void)
             //powern = tmpval * (float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);
             //rpowern = tmpval * (float)(QP1_Coefficient/g_ConstPara.Icont/g_ConstPara.Constant);         	//56250000.0
 			//rpowern = tmpval * 0.0629;
-            rpowern = (tmpval / adjust_data_f.power2gain.y) * 100; //获得实际无功功率，用于计算视在功率和功率因数
+
+
+            //rpowern = (tmpval / adjust_data_f.power2gain.y) * 100; //获得实际无功功率，用于计算视在功率和功率因数
+            rpowern = tmpval * (float)(QP1_Coefficient / g_ConstPara.Icont / g_ConstPara.Constant);
         }
         else
         {
@@ -617,7 +621,7 @@ void EMUTampProc(void)
         Word_BCD2(&g_InsBCD.PowerFactor[0], tmpval);    //放大1000倍的功率因数
 	}
 
-//test
+    //test
 // g_InsBCD.Voltage[0] = 0x00;//电压
 // g_InsBCD.Voltage[1] = 0x11;
 // g_InsBCD.Voltage[2] = 0x22;

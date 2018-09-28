@@ -56,32 +56,32 @@ void ReverseCpy(unsigned char xdata * Dst,unsigned char xdata * Src,unsigned cha
 *******************************************************************************************/
 void NBdata_SendString(unsigned char *TXStr,unsigned char len, char *fasong)
 {
-    //AT指令结构：AT+NMGS=<length>,<data>\r\n
+    //AT指令结构：AT+M2MCLISEND==<data>
     //char fasong[127];
 	//char temp[MAX_UART_DATA_LEN];
     unsigned char changdu;
     //建立  AT指令
-    sprintf(&fasong[0],NB_SEND_DATA_LWM2M);
-    changdu = strlen(NB_SEND_DATA_LWM2M);
+    sprintf(&fasong[0],NB_SEND_DATA_LWM2M_MTK);
+    changdu = strlen(NB_SEND_DATA_LWM2M_MTK);
     //建立  <length>
-    if(len/10)
-    {
-        fasong[changdu] = (len / 10) + 0x30;
-        changdu++;
-    }
-    if (len%10)
-    {
-        fasong[changdu] = (len % 10) + 0x30;
-        changdu++;
-    }
-    //建立  ,
-    sprintf(&fasong[changdu],",");
-    changdu++;
+    // if(len/10)
+    // {
+    //     fasong[changdu] = (len / 10) + 0x30;
+    //     changdu++;
+    // }
+    // if (len%10)
+    // {
+    //     fasong[changdu] = (len % 10) + 0x30;
+    //     changdu++;
+    // }
+    // //建立  ,
+    // sprintf(&fasong[changdu],",");
+    // changdu++;
     //建立  <data>
 	HexGroupToString(&fasong[changdu],TXStr,len);
 	changdu +=len*2;
 
-    //建立  \r\n
+    //建立  、换行回车
     sprintf(&fasong[changdu],"\r\n");
     changdu += 2;
     //发送
@@ -122,9 +122,6 @@ unsigned char ATcmd_Transmit(unsigned char *AT_str, char *Repl_str, unsigned int
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
 					NBCount10ms = 0;
-
-					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
-					//g_NB.InitCount = 0;//重置计数器
 					g_NB.UARTReceiveOK = 0;
 					REN = 1;
 					ClearBUFF(UartRxBuf,countof(UartRxBuf));
@@ -144,7 +141,6 @@ unsigned char ATcmd_Transmit(unsigned char *AT_str, char *Repl_str, unsigned int
 	}
 	g_NB.UARTReceiveOK = 0;
 	REN = 1;
-	//g_NB.InitCount++;
 	ClearBUFF(UartRxBuf,countof(UartRxBuf));
 
 	return 1;
@@ -187,12 +183,10 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
 					NBCount10ms = 0;
-
-					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
-					//g_NB.InitCount = 0;//重置计数器
 					g_NB.UARTReceiveOK = 0;
 					REN = 1;
 					ClearBUFF(UartRxBuf,countof(UartRxBuf));
+
 					return 0;
 				}
 				Rx_len++;
@@ -208,7 +202,6 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 	}
 	g_NB.UARTReceiveOK = 0;
 	REN = 1;
-	//g_NB.InitCount++;
 	ClearBUFF(UartRxBuf,countof(UartRxBuf));
 	return 1;
 }
@@ -231,9 +224,9 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 	Repl_len= 0;
     //通过UART0发送AT指令
 	UART0_SendString((unsigned char*)AT_str,strlen(AT_str));
-	Delay_ms(300);//等待返回
+		Delay_ms(300);//等待返回
 
-	NBCount10ms = 0;//NB模块超时处理
+	NBCount10ms=0;//NB模块超时处理
 	RSTSTAT &= Bin(11111000);//清看门狗
 	while(Wait_ms>(NBCount10ms*10))
 		//while(1)
@@ -244,16 +237,14 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 			{
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
-
-					for(i=0;i<gBUartLen-Rx_len-1;i++)
-						Get_str[i] = UartRxBuf[i+Rx_len+1];
+					//":"后面有空格，加一位
+					for(i=0;i<gBUartLen-Rx_len-2;i++)
+						Get_str[i] = UartRxBuf[i+Rx_len+2];
 					//字符串函数能否在单片机中使用？
 					// p = strtok((char *)UartRxBuf, " ");//分离收到的字符串
 					// p = strtok(NULL, ":");//取后半段
 					// strcpy(Get_str,p);
 					NBCount10ms = 0;
-					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
-					//g_NB.InitCount = 0;//重置计数器
 					g_NB.UARTReceiveOK = 0;
 					REN = 1;
 					ClearBUFF(UartRxBuf,countof(UartRxBuf));
@@ -269,7 +260,6 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 			if(Rx_len>gBUartLen+1) Rx_len=0;
 		}
 	}
-	//g_NB.InitCount ++;
 	g_NB.UARTReceiveOK = 0;
 	REN = 1;
 	ClearBUFF(UartRxBuf,countof(UartRxBuf));
@@ -277,81 +267,73 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 
 }
 /*******************************************************************************************
-** 函数名称: NBdata_Receive_HW
+** 函数名称: NBdata_Receive_MTK
 ** 函数描述: nb模块接收到的数据
 ** 输入参数: *Repl_str UART接收到的数据string		*Get_str 读出的数据HEX格式	*len 接收的数据长度
 ** 输出参数: 是否成功接收到数据
 *******************************************************************************************/
-unsigned char NBdata_Receive_HW(char *Repl_str, unsigned char *Get_str, unsigned char *len)
+unsigned char NBdata_Receive_MTK(char *Repl_str, unsigned char *Get_str, unsigned char *len)
 {
-   //为非透传模式，平台发送数据为01 01 00 00 00 00 00 00 FF 11 00 20 16
-    //禾苗模块输入形式： "auto:3 27\r\rnot badge cmd\r\n27,013031303130303030303030303030303046463131303032303136\r\n"
-    char dest[128];
-    char dest1[128];
-    char changdu[4];  //接收数据长度可为0-99以内
-    unsigned char Lenght[2];
-    char shuzu[] = NB_DATA_RECEIVE; //标识字符
-    unsigned char Rx_len = 0;
-    unsigned char shuzu_len = 0;
-    unsigned char data_len = 0;
-    unsigned char i;
-    while (1)
-    {
+    //假定为透传模式，平台发送数据为112233
+    //BC26模块输入形式： "\r\n+QLWDATARECV: 19,1,0,7,112233\r\n"
+     char dest[99];  //必须256
+     char changdu[4] = {0x00,0x00,0x00,0x00}; //接收数据长度可为0-99以内
+     char shuzu[] = NB_DATA_RECEIVE;    //标识字符
+     char fuhao = 0;
+     unsigned char changdu_len = 0;
+     unsigned char Rx_len = 0;
+     unsigned char shuzu_len = 0;
+     unsigned char i;
+	 REN = 0;
+	while(1)
+	{
+		while (Repl_str[Rx_len] == shuzu[shuzu_len]) //对比一个字符
+		{
+			if (shuzu_len == strlen(shuzu)-1) //所有字符都符合
+			{
+				while(Rx_len<MAX_UART_DATA_LEN+1)
+				{
+				if(Repl_str[Rx_len] == ',') //","个数查询
+				{
+					fuhao++;
+				}
+				Rx_len++;
+				if((fuhao == 3)&&(Repl_str[Rx_len] != ','))  //接收长度数据
+				{
+					changdu[changdu_len] = Repl_str[Rx_len];
+					changdu_len++;
+				}
+				if(fuhao == 4) //接收数据
+				{
+					i = StrToInt(changdu)-1;
+					i = i / 2;
+					*len = i;
+					Rx_len++;//去掉特殊字符
+					for (i = 0;i<((*len)*2);i++)
+					{
+					dest[i] = Repl_str[Rx_len];
+					Rx_len++;
+					}
+					StringToHexGroup(Get_str, dest, (*len)*2); //将数据转换为HEX格式
 
-        while (Repl_str[Rx_len] == shuzu[shuzu_len]) //对比一个字符
-        {
-            if (shuzu_len == strlen(shuzu)-1) //所有字符都符合
-            {
+					return 1;
+				}
+				if (Rx_len > MAX_UART_DATA_LEN + 1)
 
-                Lenght[0] = Rx_len+1;   //取长度开头的位置
-                while (Rx_len < MAX_UART_DATA_LEN + 1)
-                {
+				return 0;
+				}
+			}
+			Rx_len++;
+			shuzu_len++;
+			if (Repl_str[Rx_len] != shuzu[shuzu_len])
+			break; //不符合，跳出
+		}
+		shuzu_len = 0;
+		Rx_len++;
+		if (Rx_len > MAX_UART_DATA_LEN + 1)
 
-                    if (Repl_str[Rx_len] == ',') //寻找','
-                    {
-                        Lenght[1] = Rx_len; //
-                        for (i = Lenght[0]; i < Lenght[1];i++) //取出长度
-                            changdu[i - Lenght[0]] = Repl_str[i];
-
-                        //转换为int型
-                        data_len = (StrToInt(changdu) * 2) - 2;
-
-                        *len = data_len / 4;
-                        //跳过接收前缀01
-                        Rx_len++;//
-                        Rx_len++;//
-                        Rx_len++;//
-                        for (i = 0; i < data_len; i++)
-                        {
-                            dest[i] = Repl_str[Rx_len];
-                            Rx_len++;
-                        }
-                        StringToHexGroup((unsigned char*)dest1, dest, data_len); //将数据转换为HEX格式
-                         //由于不是透传，需要转换两次
-                        StringToHexGroup(Get_str, dest1, (data_len / 2));
-                       return 1;
-
-                    }
-                    Rx_len++;
-                    if  (Rx_len > MAX_UART_DATA_LEN+1 )
-                    {
-
-                        return 0;
-                    }
-                }
-            }
-            Rx_len++;
-            shuzu_len++;
-            if (Repl_str[Rx_len] != shuzu[shuzu_len])
-            break; //不符合，跳出
-        }
-        shuzu_len = 0;
-        Rx_len++;
-        if (Rx_len > MAX_UART_DATA_LEN + 1)
-        {
-        return 0;
-        }
-    }
+		return 0;
+	}
 }
 /*******************************************************************************************
 ** 函数名称: NB_Init
@@ -362,8 +344,9 @@ unsigned char NBdata_Receive_HW(char *Repl_str, unsigned char *Get_str, unsigned
 
 void NB_Init(void)
 {
-
 	char p[32];
+	unsigned char recivedata[64];
+	char imei[16];
 	char *dest = p;
 
 	if(g_NB.ReInitTime||!g_NB.InitStep)//没有到初始化时间，或者初始化结束
@@ -372,112 +355,141 @@ void NB_Init(void)
 	}
 	else
 	{
-		if(g_NB.InitCount >23)//10次
+		//TEST
+		// g_NB.InitState[0] = NB_Init_OK;
+		// g_NB.InitState[1] = NB_Init_OK;
+		if((g_NB.InitCount & 0xF0) == 0x30) //复位次数超过3次
 		{
-			//g_NB.InitCount =0x70;//复位失败，通信错误
-			NB_Error();
-			g_NB.InitStep = 1;
+			//NB_Error();
+			g_NB.InitCount = 0x00;
 			g_NB.ReInitTime = NB_RETRY_TIME;
+			g_NB.InitStep = 1;
+			g_NB.InitState[0] = NB_Init_Reset;
+			g_NB.InitState[1] = NB_Init_Reset;
+			sprintf(dest,"AT+CFUN=0\r\n");//关机
 
+			UART0_SendString((unsigned char *)dest,11);
+
+			//显示警告
 			g_Flag.ALARM[0] = 0x0f;
 			g_Flag.ALARM[1] = 0x00;
-
-				//TEST
-// g_NB.InitState[0] = NB_Init_OK;
-// g_NB.InitState[1] = NB_Init_OK;
+			return;
+		}
+		if((g_NB.InitCount & 0x0F) > 0x09)//单步骤初始化次数等于10次
+		{
+			g_NB.InitCount &= 0xF0;			//低四位置零
+			g_NB.InitCount += 0x10;			//高四位加一
+			sprintf(dest,"AT+QRST=1\r\n");//复位
+			UART0_SendString((unsigned char *)dest,11);
+			g_NB.ReInitTime = 15;
+			g_NB.InitStep = 1;
 			return;
 		}
 		switch(g_NB.InitStep)
 		{
 			case 1:
 			{
-				//g_NB.InitCount ++;
-				g_NB.ReInitTime = 2;	//2秒后进行初始化
-				//sprintf(dest,"AT+NBAND=%s\r\n",SERVER_BAND);		//设置频段为5，电信卡
-				sprintf(dest,"AT+NBAND=5,8\r\n");
+				g_NB.InitCount ++;
+				g_NB.ReInitTime = 10;					//10秒后进行初始化
+				sprintf(dest,"AT+SM=LOCK\r\n");			//关闭PSM模式
 
-				if(!ATcmd_Transmit(dest,"OK",1000))
+				if(!ATcmd_Transmit(dest,"OK",2000))
 				{
-					g_NB.InitStep = 2;		//进行初始化步骤4
-					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
+					g_NB.InitCount &= 0xF0;			//低四位置零
+					g_NB.InitStep = 2;					//进行初始化步骤2
 					break;
 				}
 				else break;
 			}
 			case 2:
 			{
-				sprintf(dest,"AT+NRB\r\n");
-				UART0_SendString((unsigned char *)dest,8);
-				g_NB.InitStep = 3;
-				g_NB.ReInitTime = 20;
-				break;
+				g_NB.InitCount ++;
+				g_NB.ReInitTime = 30;					//10秒后进行初始化
+				sprintf(dest,"AT+CFUN=1\r\n");
 
+
+				if(!ATcmd_Transmit(dest,"OK",2000))
+				{
+					g_NB.InitCount &= 0xF0;			//低四位置零
+					g_NB.InitStep = 3;					//进行初始化步骤3
+					break;
+				}
+				else
+					break;
 			}
 			case 3:
 			{
-				//g_NB.InitCount ++;
-				g_NB.ReInitTime = 4;	//2秒后进行初始化
-				sprintf(dest,"AT+MREGSWT=1\r\n");						//自动注册
-
-				if(!ATcmd_Transmit(dest,"OK",1000))
+				g_NB.InitCount ++;
+				g_NB.ReInitTime = 10;					//10秒后进行初始化
+				sprintf(dest,"AT+CGPADDR=1\r\n");		//查询模块联网状态
+				//if(!ATcmd_Transmit(dest,"OK",2000))
+				if(!NBstate_Receive(dest,"+CGPADDR:",recivedata,2000))
 				{
-					g_NB.InitStep = 4;		//进行初始化步骤4
-					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
+					g_NB.InitCount &= 0xF0;			//低四位置零
+					g_NB.InitStep = 4;					//进行初始化步骤4
 					break;
 				}
-				else break;
+				else
+				{
+					g_NB.ReInitTime = 30;		//30秒后再次查询驻网状态
+					break;
+				}
 			}
-
 			case 4:
 			{
-				//g_NB.InitCount ++;
-				g_NB.ReInitTime = 2;	//2秒后进行初始化
-				sprintf(dest,"AT+CFUN=1\r\n");						//设置为收发模式
-				//sprintf(dest,"AT+CIMI\r\n");						//查询手机号
-				if(!ATcmd_Transmit(dest,"OK",1000))
+				g_NB.InitCount ++;
+				g_NB.ReInitTime = 10;					//10秒后进行初始化
+				sprintf(dest,"AT+CGSN=1\r\n");			//获取模块IMEI号码
+				if(!NBstate_Receive(dest,"+CGSN:",recivedata,2000))
 				{
-					g_NB.InitStep = 5;		//进行初始化步骤5
-					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
-					break;
+					strncpy((char *)imei, (char *)recivedata, 15);	//取得IEMI号码15位，
+					imei[15] = '\0';					//加一位结束符"\0"
+					if(strlen(imei)==15)				//判断IMEI号码的正确性
+					{
+						sprintf(dest,"AT+M2MCLINEW=%s,%s,\"%s\",90\r\n",SERVER_ADDRESS,SERVER_PORT,imei);//向IOT平台注册
+						if(!ATcmd_Transmit(dest,"OK",2000))
+						{
+							g_NB.InitStep = 5;					//进行初始化步骤5
+							g_NB.InitCount &= 0xF0;			//低四位置零
+							break;
+						}
+						else		//注册失败，重启
+						{
+							sprintf(dest,"AT+QRST=1\r\n");
+							UART0_SendString((unsigned char *)dest,11);
+							g_NB.ReInitTime = 10;
+							g_NB.InitStep = 1;
+							break;
+						}
+					}
+					else
+					{
+						break;
+					}
 				}
-				else break;
+
 			}
 			case 5:
 			{
-				//g_NB.InitCount ++;
-				g_NB.ReInitTime = 2;	//2秒后进行初始化
-				sprintf(dest,"AT+NCDP=%s,%s\r\n",SERVER_ADDRESS,SERVER_PORT);//地址写入
-				if(!ATcmd_Transmit(dest,"OK",1000))
+				g_NB.InitCount ++;
+				g_NB.ReInitTime = 0;				//初始化完成
+				sprintf(dest,"AT+CEREG?\r\n");
+				if(!ATcmd_Transmit(dest,"OK",2000))
 				{
-					g_NB.InitStep = 6;		//进行初始化步骤6
-					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
-					break;
-				}
-				else break;
-			}
-			case 6:
-			{
-				//g_NB.InitCount ++;
-				g_NB.ReInitTime = 0;	//2秒后进行初始化
-				sprintf(dest,"AT+MLWSREGIND=0\r\n");				//注册
-				if(!ATcmd_Transmit(dest,"OK",1000))
-				{
-					g_NB.InitStep = 0;		//初始化结束
-					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
-					MemInitSet(&g_NB.InitState[0],NB_Init_OK,2);//置位NBinit FLAG
-					VER_WRbytes(EE_NB_STATE, &g_NB.InitState[0], 2,1);
-					NB_Error();
+					g_NB.InitStep = 0;				//初始化结束
+					g_NB.InitCount &= 0xF0;			//低四位置零
+
+					MemInitSet(&g_NB.InitState[0],NB_Init_OK,2);//置位 NBinit FLAG
+					VER_WRbytes(EE_NB_STATE, &g_NB.InitState[0], 2, 1);
+					//NB_Error();
+					g_Tran.AutoReportFlag = COUNT_DOWN;
+					g_Tran.AutoReportCount = 1;//1分钟后 发送上电握手信号
 					break;
 				}
 				else break;
 			}
 			default:break;
 		}/*switch finish*/
-//	sprintf(dest,"AT+CSQ\r\n");							//查询信号强度查询
-//	if(ATcmd_Transmit(dest,8,"OK",2000)) continue;
-//	sprintf(dest,"AT+CGATT?\r\n");		//网络状态查询
-//	if(ATcmd_Transmit(dest,11,"OK",2000)) continue;
-
 	}
 }
 /****************************************************************************
@@ -514,14 +526,14 @@ void NB_Error(void)
 	{
 		if((get_char[0] == 0x30+9) && (get_char[1] == 0x30+9))//Return value: 99,99
 		{
-			g_Flag.ALARM[0] = 0x02;//无信号 或者SIM卡未激活
+			g_Flag.ALARM[0] = 0x02;//SIM卡没插
 			g_Flag.ALARM[1] = 0x00;
 			return;
 		}
 	}
 	else if(strlen(dest == 1))
 	{
-		if(get_char[0] < 0x30+5)//信号强度低
+		if(get_char[0] < 0x30+5)//信号强度低 或者SIM卡未激活
 		{
 			g_Flag.ALARM[0] = 0x03;
 			g_Flag.ALARM[1] = 0x00;
@@ -530,8 +542,8 @@ void NB_Error(void)
 	}
 	//检测驻网
 	sprintf(dest,NETWORK_DETECT);
-	NBstate_Receive((unsigned char *)dest,"+CGATT:",(char *)get_char,2000);
-	if(get_char[0] == 0x30)	//返回 +CGATT:0 未能成功驻网
+	NBstate_Receive((unsigned char *)dest,"+CEREG: ",(char *)get_char,2000);
+	if((get_char[2] == 0x30) ||	(get_char[2] == 0x32) || (get_char[2] == 0x34))//返回 +CEREG: 0,0 未能驻网
 	{
 		g_Flag.ALARM[0] = 0x04;
 		g_Flag.ALARM[1] = 0x00;

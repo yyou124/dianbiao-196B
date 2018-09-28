@@ -49,7 +49,8 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define     UART_BAUDRATE_2400           (32768-FSYSCLK/16/2400)
 #define     UART_BAUDRATE_4800           (32768-FSYSCLK/16/4800)
 #define     UART_BAUDRATE_9600           (32768-FSYSCLK/16/9600)
-#define     UART_BAUDRATE_19200           (32768-FSYSCLK/16/19200)
+#define     UART_BAUDRATE_19200          (32768-FSYSCLK/16/19200)
+#define     UART_BAUDRATE_115200         (32768-FSYSCLK/16/115200)
 
 #define     UART_BFINE_300               ((FSYSCLK/300) - 16*(32768 - UART_BAUDRATE_300))   //手算为7，需验证
 #define     UART_BFINE_600               ((FSYSCLK/600) - 16*(32768 - UART_BAUDRATE_600))
@@ -57,7 +58,8 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define     UART_BFINE_2400              ((FSYSCLK/2400) - 16*(32768 - UART_BAUDRATE_2400))
 #define     UART_BFINE_4800              ((FSYSCLK/4800) - 16*(32768 - UART_BAUDRATE_4800))
 #define     UART_BFINE_9600              ((FSYSCLK/9600) - 16*(32768 - UART_BAUDRATE_9600))
-#define     UART_BFINE_19200              ((FSYSCLK/19200) - 16*(32768 - UART_BAUDRATE_19200))
+#define     UART_BFINE_19200             ((FSYSCLK/19200) - 16*(32768 - UART_BAUDRATE_19200))
+#define     UART_BFINE_115200            ((FSYSCLK/115200) - 16*(32768 - UART_BAUDRATE_19200))
 
 #define     UART0_BAUDRATE               UART_BAUDRATE_2400		    //UART波特率2400bps
 #define     UART1_BAUDRATE               UART_BAUDRATE_2400		    //UART波特率2400bps
@@ -95,7 +97,7 @@ UARTDRIVER_EXT  void ClearBUFF(unsigned char *cleardata, unsigned int len);
 //  UARTDRIVER_EXT unsigned char xdata gb485Len;
 //  UARTDRIVER_EXT unsigned char xdata gb485TxdLen;
 
-#define     MAX_UART_DATA_LEN       64
+#define     MAX_UART_DATA_LEN       128
 #define     PACKAGE_RXD_TIMEOUT     100
 #define     PACKAGE_RXD_TIMEOUT1     20
 UARTDRIVER_EXT unsigned char xdata Res;
@@ -109,6 +111,7 @@ UARTDRIVER_EXT unsigned char xdata gbUartAdjust;//通讯校表启动标志
 extern unsigned char 	UartTxBuf[MAX_UART_DATA_LEN];				//接收数据缓冲器
 extern unsigned char   UartRxBuf[MAX_UART_DATA_LEN];				//发送数据缓冲器
 extern unsigned char data	gBUartLen;									//字节个数计数器
+extern unsigned int data	gWUartRxdTimeOut;							//传送一个数据包超时计时器
 /*
 UARTDRIVER_EXT unsigned char UART_Rx_Flag;
 UARTDRIVER_EXT unsigned char xdata RxBuffer[RxBufferSize];

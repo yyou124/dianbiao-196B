@@ -82,7 +82,7 @@ void PowerAdjThread(void)                					//脉冲校表线程
 			else if(g_Cal.Flag  == D_InitEnd)				    //结束校表程序
 			{
 				//校表结束，将校表参数及FLAG写入EEPROM中
-				VER_WRbytes_Limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
+				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);
 				//写入电量，整数
 				MemInitSet(&kwh_value.integer[0],0x00,5);
 				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5, 1);
@@ -99,7 +99,13 @@ void PowerAdjThread(void)                					//脉冲校表线程
 				VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
 				//写入继电器开启标志
 				MemInitSet(&g_Buffer[0], 0xA5, 2);
-				VER_WRbytes(RELAY_STATUS,&DelayStatus[0],2, 1);
+				VER_WRbytes(RELAY_STATUS,&g_Buffer[0],2, 1);
+				//写入自动上报时间
+				g_Commu.AutoReportTimeSet = NB_AUTO_REPORT_TIME;//自动上报时间
+				g_Commu.AutoReportTimeSetAck = NB_AUTO_REPORT_ACk;//ACK相应时间
+				Word_BCD2(&g_Buffer[0],g_Commu.AutoReportTimeSet);
+				Word_BCD2(&g_Buffer[2],g_Commu.AutoReportTimeSetAck);
+				VER_WRbytes(EE_Commu_Time, &g_Buffer[0],4, 1);
 				gBAdjKeyCount = 0;
 				gBAdjKeyEnable = 0x00;
 				gBAdjKeyEnable1 = 0x00;
@@ -234,6 +240,7 @@ void JumpPowerAutoAdjust(void)
 							_nop_();
 							WriteEMU_REG(P2CAL,val);
 							adjust_data.p2cal = (unsigned int)val.val;
+							//GetAdjustPower();//计算功率换算系数
 							gbAverTimes = 0;
 							gbAdjStepFlag |= Bin(00000010);		   //OK
 							gbAdjCurrentStep = 2;

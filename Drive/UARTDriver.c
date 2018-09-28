@@ -65,13 +65,13 @@ void Init_Uart(void)
     PCON=Bin(00000000);                      	//SCON[7..5]作SM0..3用  波特率不加倍
 //----------UART0------------------------
     SCON=Bin(01000000);				        	//选用模式1 8位数据 异步 可变波特率 接收中断使能
-//    SBRTL=UART0_BAUDRATE&0xff;
-//    SBRTH=(UART0_BAUDRATE>>8)&0xff;
-//    SBRTH|=Bin(10000000);	                	//Bit7:打开波特率发生器，Bit6-0:高七
-	SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
-	SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
+//	SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
+//	SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
+	SBRTL = UART_BAUDRATE_115200&0x00FF;
+	SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
 	SFINE &= Bin(11110000);
-	SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+//	SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+	SFINE |= (UART_BFINE_115200)&0x0F;
 	SBRTH |= 0x80;                          	//串口0波特率发生器使能
 //----------UART1------------------------
 	SCON1=Bin(01000000);				        //选用模式1 8位数据 异步 可变波特率 接收中断使能
@@ -166,7 +166,7 @@ void EUART0_ISP(void) interrupt 4
 				{
 					gbUartRece	=	1;			//设置当前为数据接收状态
 					gBUartLen	=	0;			//清字节个数计数器
-					gWUartRxdTimeOut = PACKAGE_RXD_TIMEOUT;	//设置一个数据包接收超时时间
+					gWUartRxdTimeOut = PACKAGE_RXD_TIMEOUT; //设置一个数据包接收超时时间
 				}
 				gBUartLen++;
 			}
@@ -396,7 +396,7 @@ void  UART0_SendString_Limit(unsigned char *TXStr,unsigned char len)
 	char dest[64];
 	len_q = len/60;
 	len_r = len%60;
-	if(len_q)//长度大于60，分割发送
+	if(len_q)//长度大于50，分割发送
 	{
 		for(i=0;i<len_q;i++)
 		{
@@ -404,11 +404,10 @@ void  UART0_SendString_Limit(unsigned char *TXStr,unsigned char len)
 			UART0_SendString((unsigned char*)dest,60);
 			Delay_ms(50);
 		}
-		Delay_ms(50);
 		strncpy(dest, TXStr+(i*60), len_r);
 		UART0_SendString((unsigned char*)dest,len_r);
 	}
-	else//小于60直接发送
+	else//小于50直接发送
 		UART0_SendString((unsigned char*)TXStr,len);
 	gBUartLen		= 0x00;				//清字节个数计数器
 	gBUartTotalByte = 0x00;				//清数据字节总数寄存器
@@ -486,7 +485,7 @@ void ClearBUFF(unsigned char *cleardata, unsigned int len)
 *****************************************************************************/
 void Uart1Decode(void)
 {
-	unsigned char write_flag;
+unsigned char write_flag;
 	unsigned int EE_addr;
 	unsigned char EE_addrH;
 	unsigned char EE_addrL;
@@ -656,7 +655,7 @@ void Uart1Decode(void)
 	}
 	gBUartCon1  = Bin(00000000);
 	gbUartTran1 = 1;									//设置发送数据状态标志
-	TI1 = 1;											//软件置一，中断响应
+	TI1 = 1;											//软件置一，中断响应											//软件置一，中断响应
 }
 
 

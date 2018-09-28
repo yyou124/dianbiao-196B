@@ -109,7 +109,7 @@ typedef struct{
                 //unsigned int   irms1gain; //通道1瞬时电流增益
                 unsigned int irms2gain;  //通道2瞬时电流增益
 
-				//unsigned int   w1gain;	  //通道1的功率修正	 //看下正偏多还是负偏多,0xa6/0xffff=0.0025 ,(0xffff-0xf6ea)/0xffff=0.03
+                //unsigned int   w1gain;	  //通道1的功率修正	 //看下正偏多还是负偏多,0xa6/0xffff=0.0025 ,(0xffff-0xf6ea)/0xffff=0.03
                 unsigned int   w2gain;	  //通道2的功率修正
 
 				//unsigned int   p1cal;	  //通道1的相位修正
@@ -352,7 +352,7 @@ MEASUREPROC_EXT void check_dotKWHD(void);  			 	//check 正向有功小数部分,已修改
 MEASUREPROC_EXT void KWH_RKWH_dot(void);			 	//check 正向，反向有功小数部分，已修改，去掉了反向部分
 MEASUREPROC_EXT void ECRunKwh (void);                	//计算组合有功
 MEASUREPROC_EXT void ReadMeterFromTOEeprom(void);
-
+MEASUREPROC_EXT void ReadAutoRepotrTime(void);
 MEASUREPROC_EXT void check_dotQKWHD(void);  		 	//check 正向无功小数部分
 //MEASUREPROC_EXT void check_dotRQKWHD(void); 		 	//check 反向无功小数部分
 MEASUREPROC_EXT void QKWH_RQKWH_dot(void);			 	//check 正向，反向无功小数部分

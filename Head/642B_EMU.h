@@ -115,8 +115,8 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 
 #define     DefaultConstant      	1200	//imp
 #define     DefaultThreshold     	0x0C
-#define     DefaultIcont        	0x30
 //#define     DefaultIcont        	0x41
+#define     DefaultIcont        	0x30
 
 #define     DefaultIStart        	20		    				//mA  //1级表的启动电流为千分之4的Ib
 #define     C_StartCurrentT      	DefaultIStart/2		        //mA  //启动实验时电流通道切换的判断依据，取启动电流的一半
@@ -166,13 +166,15 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define I2_Coefficient	(float)((EMU_ADC_REF/((I_R_CT*I_R_CT_PGA)/EMU_ADC_Value)*I_MUL)) //(float)0.058;
 
 //APWRA1*(float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);	  //放大16384倍的功率值，单位为W
-#define P1_Coefficient	(float)((3600.0*8000.0*1000.0*16384.0)/EMU_ADC_Value)			//(float)(56250000.0
+//#define P1_Coefficient	(float)((3600.0*8000.0*1000.0*16384.0)/EMU_ADC_Value)			//(float)(56250000.0
+//放大100倍的功率
+#define P1_Coefficient (float)((3600.0 * 8000.0 * 1000.0 * 100.0) / EMU_ADC_Value) //(float)(56250000.0
 
 //APWRA2*(float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);	  //放大16384倍的功率值，单位为W
 #define P2_Coefficient	(float)((3600.0*8000.0*1000.0*16384.0)/EMU_ADC_Value)			//(float)(56250000.0
 
 //RPWRA1*(float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);	  //放大16384倍的功率值，单位为W
-#define QP1_Coefficient	(float)((3600.0*8000.0*1000.0*16384.0)/EMU_ADC_Value)			//(float)(56250000.0
+#define QP1_Coefficient	(float)((3600.0*8000.0*1000.0*100.0)/EMU_ADC_Value)			//(float)(56250000.0
 
 //RPWRA2*(float)((3600.0*8000.0/g_ConstPara.Icont/g_ConstPara.Constant/8388608.0)*1000.0*16384.0);	  //放大16384倍的功率值，单位为W
 #define QP2_Coefficient	(float)((3600.0*8000.0*1000.0*16384.0)/EMU_ADC_Value)			//(float)(56250000.0

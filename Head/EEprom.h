@@ -44,7 +44,7 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 /*-------------------------------EEPROM信息(包括其EEPROM地址定义区，页)-----------------------*/
 #define D_EEP_BUF_LEN       50          			//eeprom 的操作的BUFF的长度
 #define EE_SIZE             8                		//8bit一页  24c04
-#define EE_PAGE             512	                    //2Kbit EEPROM空间，一共256页
+#define EE_PAGE             512	                    //4Kbit EEPROM空间，一共415页
 #define MAX_EE_SIZE         16                      //EEPROM一次性最大写入地址长度
 #define	FRAM_EEPROM			0xA0                    //EEPROM的通讯地址
 //EEPROM PAGE ADDRESS: 0X000 ~ 0X1FF
@@ -79,10 +79,11 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define	ADJ_ADDR_SUM		ADJ_ADDR+13             //校验码
 #define	ADJ_ADDR_XOR		ADJ_ADDR+13			    //XOR校验码
 
-//编程标志  2+2字节                        0x00AC~0x00AF
+//编程标志  2+2字节                        0x00BC~0x00BF
 #define EE_PROG_FLAG        0x00BCu
-//校表参数(浮点型)--功率 4+2字节            0x00C0~0x00C5
-#define ADJ_ADDR_POWER2GAIN 0x00C0u
+
+//上传信号发送时间，ACK等待时间 4+2字节         0x00C0~0x00C5
+#define EE_Commu_Time       0x00C0u
 //第一次上电标志 4+2字节                    0x00C6~0x00CB
 #define	EE_FirstProg_FLAG	0x00C6u
 //继电器通断电标志 2+2字节                  0x00CC~0x00CF
@@ -119,7 +120,7 @@ EEPROM_EXT bit SEQ_write_limit(unsigned int EE_addr, unsigned char *EE_buff, uns
 EEPROM_EXT bit EE_to_RAM(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N);
 EEPROM_EXT unsigned char VER_RDbytes(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N);
 EEPROM_EXT void VER_WRbytes(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK);
-EEPROM_EXT void VER_WRbytes_Limit(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK);
+EEPROM_EXT void VER_WRbytes_limit(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK);
 EEPROM_EXT void SUM_xorb(unsigned char *RAM,unsigned char N);
 EEPROM_EXT void MemInitSet(char *dst, unsigned char value, unsigned int count);
 

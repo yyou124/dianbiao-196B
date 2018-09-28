@@ -42,8 +42,7 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 *******************************************************************************************/
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-//unsigned char temp[18] = {0x11,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18};
-//unsigned char temp_read[18] = {0x00,0x00};
+
 void main(void)
 {
 	IEN0 = 0x00;                        //关闭总中断，ADC和TPS中断，定时器0、1、2中断，外部1中断，串口0中断
@@ -51,8 +50,8 @@ void main(void)
 	PSW = 0x00;                         //清溢出标志位，UART通信偶校验(BIT0 = 0)
 	Change32KToPLL();                   //系统2分频，时钟频率4.096MHz
 
-	Delay_ms(500);                      //延时500ms，等待系统稳定
-	Delay_ms(500);                      //延时500ms，等待系统稳定
+	Delay_ms(100);                      //延时500ms，等待系统稳定
+	//Delay_ms(500);                      //延时500ms，等待系统稳定
 
 	Init_IO();                          //IO口初始化
 	Init_Uart();                        //UART初始化，波特率9600，数据位8，无校验，停止位1
@@ -76,36 +75,48 @@ EMU         EEMU(EMU总中断，在Init_EMU中启用)PF脉冲中断
 
 	while (1)
 	{
-//	NB_Error();
-////MemInitSet(&kwh_value.integer[0],0x00,5);
-//SEQ_write_limit(0x111,&temp[0],18);
-//EE_to_RAM(0x121,&temp_read[0],18);
+    // TEST
+    // EE_KHH_address = EE_KWH0;
+    // SEQ_write(EE_KWH_ADDRESS,(unsigned char *)&EE_KHH_address,1);
+//    KWH[0] = 0x00;
+//    KWH[1] = 0x00;
+//    KWH[2] = 0x00;
+//    KWH[3] = 0x00;
+//    KWH[4] = 0x00;
+//    VER_WRbytes(EE_KWH_ADDRESS,&kwh_value.integer[0],5, 1);
+//    KWH[0] = 0x00;
+//    KWH[1] = 0x00;
+//    KWH[2] = 0x90;
+//    KWH[3] = 0x00;
+//    KWH[4] = 0x00;
+//    EE_KWH_shift();
 
-//	SEQ_write(EE_Meter_address,&temp[0],6);
-        if((g_Flag.Run & F_PWRUP) == 0) //首次上电
+
+			
+    if ((g_Flag.Run & F_PWRUP) == 0) //首次上电
+    {
+        ACModeWDTProc();             //AC模式喂狗                修改完成
+        Change32KToPLL();            //时钟频率控制4.096MHz       修改完成
+        Init_IO();                   //IO口初始化                修改完成
+        Init_Uart();                 //UART初始化                修改完成
+        PWONInit_LCD();              //LCD初始化
+        Init_RTC();                  //RTC初始化                 修改完成
+        Init_RAM();                  //一些参数的初始化           修改完成，校表代码已被注释掉
+        g_Flag.Run |= F_PWRUP;       //置上电的标志
+        Init_Timer();                //TIME初始化                修改完成
+        ReadRTCProc();               //读RTC处理                 修改完成
+        CheckRTC();                  //RTC校验处理                修改完成
+        if ((LPDCON & 0x08) == 0x08) //VCC>2.7V
         {
-            ACModeWDTProc();            //AC模式喂狗                修改完成
-            Change32KToPLL();           //时钟频率控制4.096MHz       修改完成
-            Init_IO();                  //IO口初始化                修改完成
-            Init_Uart();                //UART初始化                修改完成
-            PWONInit_LCD();             //LCD初始化
-            Init_RTC();                 //RTC初始化                 修改完成
-            Init_RAM();                 //一些参数的初始化           修改完成，校表代码已被注释掉
-            g_Flag.Run |= F_PWRUP;      //置上电的标志
-            Init_Timer();               //TIME初始化                修改完成
-            ReadRTCProc();              //读RTC处理                 修改完成
-            CheckRTC();                 //RTC校验处理                修改完成
-            if((LPDCON & 0x08) == 0x08) //VCC>2.7V
-            {
-                Init_EMU();             //初始化EMU                  修改完成
-            }
-            else                        //VCC<2.7V
-            {
-                g_Flag.Run &= ~F_PWRUP; //置下电的标志
-            }
-            //启用LPD中断,主程序不需要
+            Init_EMU(); //初始化EMU                  修改完成
+        }
+        else //VCC<2.7V
+        {
+            g_Flag.Run &= ~F_PWRUP; //置下电的标志
+        }
+        //启用LPD中断,主程序不需要
 
-            //CheckPowerOff();//掉电检测，此处仅检测VCC<2.7v  修改完成
+        //CheckPowerOff();//掉电检测，此处仅检测VCC<2.7v  修改完成
         }
         else
         {

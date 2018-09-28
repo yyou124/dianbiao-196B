@@ -40,10 +40,13 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 
 //----------------
 
-#define     NB_POWER_ON				5                      //上电信号发出时间
-#define     NB_AUTO_REPORT_TIME		1*5					//自动上报时间(min)
 
-#define		NB_FRAME_HEAD_NUM		5				//帧头
+
+#define     NB_POWER_ON				5               //NB上电初始化时间(s)
+#define     NB_AUTO_REPORT_TIME		30	            //自动上报时间(min)
+#define     NB_AUTO_REPORT_ACk      5               //等待后台ACK时间(min)
+
+#define		NB_FRAME_HEAD_NUM		2				//帧头
 #define		NB_FRAME_DATA_NUM		4				//一些数据的长度
 
 #define		NB_FRAME_HEAD_1			0x00            //帧头1
@@ -54,7 +57,10 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 
 #define     PROTOCOL_ERROR			0xD0			//错误响应
 
-
+#define     NO_ACK_RD               3
+#define     WAITING_ACK             2
+#define     REPORT_TIME             1
+#define     COUNT_DOWN              0
 //后台请求1
 #define     NB_PROTOCOL_kWh			0x11				//?????
 #define     NB_PROTOCOL_V			0x12				//????
@@ -71,20 +77,29 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define		NB_PROTOCOL_kWh_rst		0x21				//?????
 #define     NB_PROTOCOL_RelayCtrl	0x22				//?????
 #define     NB_PROTOCOL_FactoryID	0x23				//??????
+#define     NB_PROTOCOL_ReportTime	0x24				//??????
 //主动上报
 #define     NB_PROTOCOL_PowerON		0x71				//????
 #define     NB_PROTOCOL_JICHAO		0x72				//????
+//后台ACK回应
+#define     NB_ACK_1                0xA1                //上电握手信号ACK回应
+#define     NB_ACK_2                0xA2                //自动上报ACK回应
 
 typedef struct
 {
     unsigned char PwoerOn;  //首次上电上报
 	unsigned char AutoReportFlag;
-	unsigned int AutoReportCount;	//自动上报时间
-	unsigned int AutoReportTime;	//自动上报尝试次数
+    unsigned char AutoReportTime;	//自动上报尝试次数
+	unsigned int  AutoReportCount;	//自动上报时间
 } M_Transimt;
+typedef struct
+{
+    unsigned int AutoReportTimeSet;    //自动上报时间设置
+    unsigned int  AutoReportTimeSetAck; //自动上报ACK时间设置
+} M_Commu;
 
 extern M_Transimt g_Tran;
-
+extern M_Commu g_Commu;
 extern unsigned char ProtocolReport(unsigned char *DataBuild, unsigned char item);
 extern unsigned char ProtocolBuild(unsigned char item, unsigned char *DataBuild);
 extern unsigned char Commu_Return_Error(unsigned char *DataBuild, unsigned char item);

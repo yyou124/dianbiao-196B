@@ -48,10 +48,10 @@ void AdjustMeterInit(void)
 {
     __U32_Def val;
 		//float adjust_temp;
-		unsigned long temp;
+//		unsigned long temp;
 	  val.val = 0;
-    //Factory Mode && Calibration Flag && 功率稳定
-    if((0xF001 == gbFgKeyProg) && (g_Cal.Flag  == D_Initing) && (1 == AverStablePowerJudge()))
+    //Factory Mode && Calibration Flag
+    if((0xF001 == gbFgKeyProg) && (g_Cal.Flag  == D_Initing))
     {
         switch(g_Cal.Step)
         {
@@ -90,14 +90,14 @@ void AdjustMeterInit(void)
 				adjust_data.vgain = 0x0000;
 				adjust_data.irms2gain = 0x0000;
 				// adjust_data.power2gain = 0x0000;
-                adjust_data_f.power2gain.y = 0.0; //换成浮点数
+                //adjust_data_f.power2gain.y = 0.0; //换成浮点数
                 //将用电量清零
                 MemInitSet(&kwh_value.integer[0], 0x00, 5);
-				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5,1);
+                VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5,1);
 
 				//带校验向EEPROM写入校表
-				VER_WRbytes_Limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
-                VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1);//浮点型清零
+				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);   //整形清零
+//                VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1);//浮点型清零
                 MemInitSet(&g_CalTmp.Buffer[0], 0x00, sizeof(g_CalTmp));
                 g_Cal.Step++;
                 break;
@@ -159,15 +159,15 @@ void AdjustMeterInit(void)
                 g_CalTmp.Offset.VBuf += val.val;
 
 				//Read Power
-				val = ReadEMU_REG(APWRA2);
-				temp = val.val;
-				if((temp & 0x800000)== 0x800000)	//电流反向
-				{
-					temp = ~temp + 1;
-					temp &= 0x00ffffff;
-				}
-				//Add
-				g_CalTmp.Offset.P2Buf += temp;
+				// val = ReadEMU_REG(APWRA2);
+				// temp = val.val;
+				// if((temp & 0x800000)== 0x800000)	//电流反向
+				// {
+				// 	temp = ~temp + 1;
+				// 	temp &= 0x00ffffff;
+				// }
+				// //Add
+				// g_CalTmp.Offset.P2Buf += temp;
 
                 g_Cal.Step++;
                 break;
@@ -182,7 +182,7 @@ void AdjustMeterInit(void)
                 //g_CalTmp.Offset.I1Buf = g_CalTmp.Offset.I1Buf >> 2;		  // 取四次平均值
                 g_CalTmp.Offset.I2Buf = g_CalTmp.Offset.I2Buf >> 2;
                 g_CalTmp.Offset.VBuf = g_CalTmp.Offset.VBuf >> 2;
-				g_CalTmp.Offset.P2Buf = g_CalTmp.Offset.P2Buf >>2;
+				//g_CalTmp.Offset.P2Buf = g_CalTmp.Offset.P2Buf >>2;
 
                 //Check Offset Result
                 if(g_CalTmp.Offset.I1Buf >= 0x800000)
@@ -199,12 +199,12 @@ void AdjustMeterInit(void)
 				//求电压换算系数
 				//adjust_temp = (float)g_CalTmp.Offset.VBuf;
 				//adjust_temp = adjust_temp/220;
-				adjust_data.vgain = g_CalTmp.Offset.VBuf / 220;
-				//求电流换算系数
+                adjust_data.vgain = g_CalTmp.Offset.VBuf / 220;
+                //求电流换算系数
 				//adjust_temp = (float)g_CalTmp.Offset.I2Buf/5;
-				adjust_data.irms2gain = g_CalTmp.Offset.I2Buf / 5;
-				//求功率换算系数
-				adjust_data_f.power2gain.y = g_CalTmp.Offset.P2Buf / 1100.0;
+                adjust_data.irms2gain = g_CalTmp.Offset.I2Buf / 5;
+				//求功率换算系数，等待校表结束后再计算
+				//adjust_data_f.power2gain.y = g_CalTmp.Offset.P2Buf / 1100.0;
                 //Store the parameter into adjust_data struct
                 /* adjust_data.irms1os = g_CalTmp.Offset.I1Buf;
                 val.val = adjust_data.irms1os;
@@ -223,8 +223,8 @@ void AdjustMeterInit(void)
             	WriteEMU_REG(EMUCFG0, val);             //ADC输入不短接
 
                 //Write all the calibration parameter into EEPROM
-                VER_WRbytes_Limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
-                 VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1);//浮点数写入
+                VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
+                //VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1);//浮点数写入
                 //g_Cal.Key = 0x00;
                 //g_Cal.Step = 0x00;
 
@@ -245,7 +245,43 @@ void AdjustMeterInit(void)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************************
+** 函数名称: GetAdjustPower
+** 功能描述: 功率换算系数处理
+** 入口参数: 无
+** 出口参数: 无
+*******************************************************************************************/
+// void GetAdjustPower(void)
+// {
+//     __U32_Def val;
 
+//     unsigned long temp;
+//     unsigned char i;
+//     val.val = 0;
+//     g_CalTmp.Offset.P2Buf = 0;
+//     //Average Offset Result
+//     for(i=0;i<3;i++)
+//     {
+//         val = ReadEMU_REG(APWRA2);
+//         temp = val.val;
+//         if ((temp & 0x800000) == 0x800000) //电流反向
+//         {
+//             temp = ~temp + 1;
+//             temp &= 0x00ffffff;
+//         }
+//         //Add
+//         g_CalTmp.Offset.P2Buf += temp;
+//         Delay_ms(50);
+//     }
+
+
+//     g_CalTmp.Offset.P2Buf = g_CalTmp.Offset.P2Buf >> 2;
+//     //求功率换算系数
+//     adjust_data_f.power2gain.y = g_CalTmp.Offset.P2Buf / 550.0;
+//     //Write all the calibration parameter into EEPROM
+//     VER_WRbytes(ADJ_ADDR_POWER2GAIN, &adjust_data_f.power2gain.Buffer[0], 4, 1); //浮点数写入
+// }
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
 ** 函数名称: AdjustMeterProc
