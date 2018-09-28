@@ -32,12 +32,19 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 #define		SERVER_PORT				"5683"				//NB模块端口
 
 #define     CON_SENDING_STATUS		"AT+QLWULDATASTATUS?\r\n"	//查询NB数据发送情况
-#define		NB_DATA_RECEIVE			"+NNMI"				//NB平台下发数据前缀
+#define		NB_DATA_RECEIVE			"QLWDATARECV"				//NB平台下发数据前缀
 
 #define		LWM2M_STATUS_1			"MO_DATA_ENABLED"	//能够发送数据
 #define		LWM2M_STATUS_2			"NO_UE_IP"			//无能发送数据
 #define		LWM2M_STATUS_3			"INIITIALISED"		//不能发送数据
 
+
+//错误相关
+
+#define		SIMCARD_DETECT				"AT+CIMI\r\n"		//检测SIM卡状态
+#define		SINGAL_DETECT				"AT+CESQ\r\n"		//信号强度检测
+#define		NETWORK_DETECT				"AT+CEREG?\r\n"		//驻网检测
+#define     PDPADDR_DETECT				"AT+CGPADDR=1\r\n"  //PDP地址查询
 //NB上传协议相关定义
 
 
@@ -72,17 +79,18 @@ extern M_NBMODE g_NB;
 
 //extern void 		   ClearBUFF(unsigned char * cleardata, unsigned int len);
 extern void ReverseCpy(unsigned char xdata * Dst,unsigned char xdata * Src,unsigned char Len);
-
+extern unsigned char Receive_Cmp( char *Repl_str, unsigned int Wait_ms);
 extern void 		 NBdata_SendString(unsigned char *TXStr,unsigned char len, char *fasong);
 extern unsigned char ATcmd_Transmit(unsigned char *AT_str,char *Repl_str,unsigned int Wait_ms);
 extern unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *Repl_str,unsigned int Wait_ms);
 extern unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str, unsigned char *Get_str, unsigned int Wait_ms);
-extern unsigned char NBdata_Receive(unsigned char *Repl_str, unsigned char *Get_str, unsigned char *len);
+extern unsigned char NBdata_Receive_MTK(char *Repl_str, unsigned char *Get_str, unsigned char *len);
 
 
 //extern void 		   NBdata_Transmit_Porcess(unsigned char *TX_str,unsigned char TX_len);
 extern void 		   NB_Init(void);
-extern unsigned char NB_check(void);
+extern void 			NB_Error(void);
+//extern unsigned char NB_check(void);
 
 
 //#endif

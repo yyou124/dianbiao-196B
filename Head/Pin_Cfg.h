@@ -71,7 +71,7 @@ P5->4~7
 #define D_P2PCR     (Bin(00000000))
 
 
-#define D_P3        (Bin(01111111))
+#define D_P3        (Bin(01111011))
 #define D_P3CR      (Bin(11010111))
 #define D_P3PCR     (Bin(11111111))
 

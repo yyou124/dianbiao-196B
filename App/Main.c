@@ -42,13 +42,12 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 *******************************************************************************************/
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-//                                                                                                unsigned char temp[18] = {0x11,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18};
+//unsigned char temp[18] = {0x11,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18};
 //unsigned char temp_read[18] = {0x00,0x00};
-char p[32];
-
-	char *dest = p;
-
-char at[32]="AT+CGSN=1\r\n";
+//unsigned char temp[10] = {0x12,0x12,0x13,0x04};
+//unsigned char DataRecieve[256];
+//	unsigned char nb_receive_len;
+//	 unsigned char temp[] = "\r\n+QLWDATARECV: 19,1,0,27,01010000000000000011001F19\r\n";
 void main(void)
 {
 	IEN0 = 0x00;                        //关闭总中断，ADC和TPS中断，定时器0、1、2中断，外部1中断，串口0中断
@@ -81,11 +80,9 @@ EMU         EEMU(EMU总中断，在Init_EMU中启用)PF脉冲中断
 
 	while (1)
 	{
-//MemInitSet(&kwh_value.integer[0],0x00,5);
-//VER_WRbytes_limit(EE_Meter_address,&temp[0],6,1);
-//EE_to_RAM(0x121,&temp_read[0],18);
+	//	NBdata_Receive_MTK((char *)temp,DataRecieve, (unsigned char *)&nb_receive_len);
+	//E_to_RAM(EE_PROG_FLAG, &temp[4], 3);
 
-	//SEQ_write(EE_FirstProg_FLAG,&temp[0],4);
         if((g_Flag.Run & F_PWRUP) == 0) //首次上电
         {
             ACModeWDTProc();            //AC模式喂狗                修改完成
@@ -113,6 +110,7 @@ EMU         EEMU(EMU总中断，在Init_EMU中启用)PF脉冲中断
         }
         else
         {
+					
             ACModeWDTProc();            //AC MODE WDT PROC            修改完成
             EA = 1;
             //监测中断

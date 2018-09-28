@@ -110,6 +110,7 @@ unsigned char ProtocolReport(unsigned char *DataBuild, unsigned char item)
             protocol_len += 4;
             //日期
             MemInitSet(&buf[0],0x00,6);
+			GetRealTime();	//读RTC处理
             memcpy(&buf[0],&_UINT8_RTC[0],6);
             memcpy(&DataBuild[protocol_len], &buf[0], 6);
             protocol_len += 6;
@@ -273,6 +274,7 @@ unsigned char ProtocolBuild(unsigned char item, unsigned char *DataBuild)
 			DataBuild[protocol_len] = buf[0];
 			protocol_len++;
 			MemInitSet(&buf[0],0x00,6);//buff清零
+			GetRealTime();	//读RTC处理
 			memcpy(&buf[0],&_UINT8_RTC[0],6);
 			memcpy(&DataBuild[protocol_len], &buf[0], 6);
 			protocol_len += 6;
@@ -400,12 +402,12 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 	}
 	//检查帧头,不符合，错误返回
 	memcpy(&Bufftemp[0],&DataRecieve[0],NB_FRAME_HEAD_NUM);
-	if(Bufftemp[0] != NB_FRAME_HEAD_1)
+	if(Bufftemp[0] != DOWN_FRAME_HEAD_1)
 	{
 		len_trasmit = Commu_Return_Error(&DataBuild[0],DataRecieve[9]);
 		return len_trasmit;
 	}
-	if(Bufftemp[1] != NB_FRAME_HEAD_2)
+	if(Bufftemp[1] != DOWN_FRAME_HEAD_2)
 	{
 		len_trasmit = Commu_Return_Error(&DataBuild[0],DataRecieve[9]);
 		return len_trasmit;
@@ -478,6 +480,7 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 		case NB_PROTOCOL_Timeservice: //广播授时
 		{
 			memcpy(&_UINT8_RTC[0],&DataRecieve[11],6);//写入时间
+			SetRealTime();
 			len_trasmit = ProtocolBuild(NB_PROTOCOL_Timeservice, DataBuild);
 			len_trasmit = 0;
 
@@ -541,8 +544,15 @@ void CommuProcess(void)
 	unsigned char DataRecieve[256];
 	unsigned char len;
 	unsigned char nb_receive_len;
+	unsigned char tempp[64];
+	unsigned char temp[64] = "\r\n+QLWDATARECV: 19,1,0,27,01010000000000000011001F19\r\n";
+	//test
 
-
+//	g_NB.UARTReceiveOK = 1;
+//NB_LORA[0] = 0xBB;
+//NB_LORA[1] = 0xBB;
+//g_NB.InitState[0] = NB_Init_OK;
+//g_NB.InitState[1] = NB_Init_OK;
 	//没有到自动上报时间或者没有收到数据
 	if(!(g_Tran.AutoReportFlag ||g_NB.UARTReceiveOK))
 	{
@@ -568,13 +578,13 @@ void CommuProcess(void)
 		{
 			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
 			{
-				NBdata_Transmit(DataBuild,len,"OK",1000);	//发送自动上报数据
+				NBdata_Transmit(DataBuild,len,"OK",2000);	//发送自动上报数据
 			}
 		}
 		g_Tran.AutoReportFlag = 0;
 		g_Tran.AutoReportCount = NB_AUTO_REPORT_TIME;//重置自动上报时间
 		return;
-	}
+	}/*自动上报进程finish*/
 
 	//启动接收进程
 	if(g_NB.UARTReceiveOK == 1)
@@ -590,20 +600,25 @@ void CommuProcess(void)
 		{
 			if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))//等等初始化结束
 			{
-				//待修改
-				g_NB.DataReceiveOK = NBdata_Receive(UartRxBuf, DataRecieve, (unsigned char *)&nb_receive_len);
-				if(g_NB.DataReceiveOK == 0)	return;//收到的不是协议数据
-				else if (g_NB.DataReceiveOK == 1)
+				for(len=0;len<gBUartLen;len++)
+					tempp[len] = UartRxBuf[len];
+				//检查匹配标识，并输出转换为HEX格式输出
+
+				//NBdata_Receive_MTK((char *)temp,DataRecieve, (unsigned char *)&nb_receive_len);
+				NBdata_Receive_MTK((char *)tempp,DataRecieve, (unsigned char *)&nb_receive_len);
+				//g_NB.DataReceiveOK = NBdata_Receive_MTK((char *)UartRxBuf,DataRecieve, (unsigned char *)&nb_receive_len);
+				if (g_NB.DataReceiveOK == 1)
 				{
 					len = Commu_Recive_Process(DataRecieve,DataBuild,nb_receive_len);
-					//待修改
-					NBdata_Transmit(DataBuild,len,"OK",1000);	//发送自动上报数据
+					NBdata_Transmit(DataBuild,len,"OK",2000);	//发送自动上报数据
 				}
 			}
 		}
+		REN = 1;
 	g_NB.DataReceiveOK = 0;
 	g_NB.UARTReceiveOK = 0;
 	}/*接收进程 finish*/
+
 }
 
 
@@ -611,6 +626,7 @@ void CommuProcess(void)
 /* 上传数据，依据协议形式
 低位在前，高位在后
 00 01 			  //帧头
+00 AA 72 00 00
 66 55 44 33 22 11 //表号112233445566
 AA 				  //厂家代码
 72				  //控制字，主动上报
@@ -628,3 +644,25 @@ XX XX XX XX XX XX //日期，6字节 ss mm hh DD MM YY
 //数据域截止
 CS				  //校验码
 16                //帧结束 */
+
+/*
+禾苗
+00 AA 72 00 00
+A0 A1 A2 A3 A4 A5
+01
+72
+42
+01 22 10 00 00 01
+68 43 00 00
+45 73 00 00
+99 21 00 00
+99 21 00 00
+99 21 00 00
+99 21 00 00
+99 21 00 00
+30 30 11 07 07 18
+FFFF//多余
+00
+16
+FFFFFF//多余
+*/

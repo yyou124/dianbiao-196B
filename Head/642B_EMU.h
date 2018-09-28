@@ -116,6 +116,7 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define     DefaultConstant      	1200	//imp
 #define     DefaultThreshold     	0x0C
 #define     DefaultIcont        	0x41
+//#define     DefaultIcont        	0x30
 
 #define     DefaultIStart        	20		    				//mA  //1级表的启动电流为千分之4的Ib
 #define     C_StartCurrentT      	DefaultIStart/2		        //mA  //启动实验时电流通道切换的判断依据，取启动电流的一半

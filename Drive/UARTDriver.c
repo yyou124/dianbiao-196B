@@ -65,15 +65,12 @@ void Init_Uart(void)
     PCON=Bin(00000000);                      	//SCON[7..5]作SM0..3用  波特率不加倍
 //----------UART0------------------------
     SCON=Bin(01000000);				        	//选用模式1 8位数据 异步 可变波特率 接收中断使能
-//    SBRTL=UART0_BAUDRATE&0xff;
-//    SBRTH=(UART0_BAUDRATE>>8)&0xff;
-//    SBRTH|=Bin(10000000);	                	//Bit7:打开波特率发生器，Bit6-0:高七
-	//SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
-	//SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
+//	SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
+//	SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
 	SBRTL = UART_BAUDRATE_115200&0x00FF;
 	SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
 	SFINE &= Bin(11110000);
-	//SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+//	SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
 	SFINE |= (UART_BFINE_115200)&0x0F;
 	SBRTH |= 0x80;                          	//串口0波特率发生器使能
 //----------UART1------------------------
@@ -399,7 +396,7 @@ void  UART0_SendString_Limit(unsigned char *TXStr,unsigned char len)
 	char dest[64];
 	len_q = len/60;
 	len_r = len%60;
-	if(len_q)//长度大于60，分割发送
+	if(len_q)//长度大于50，分割发送
 	{
 		for(i=0;i<len_q;i++)
 		{
@@ -407,11 +404,10 @@ void  UART0_SendString_Limit(unsigned char *TXStr,unsigned char len)
 			UART0_SendString((unsigned char*)dest,60);
 			Delay_ms(50);
 		}
-		Delay_ms(50);
 		strncpy(dest, TXStr+(i*60), len_r);
 		UART0_SendString((unsigned char*)dest,len_r);
 	}
-	else//小于60直接发送
+	else//小于50直接发送
 		UART0_SendString((unsigned char*)TXStr,len);
 	gBUartLen		= 0x00;				//清字节个数计数器
 	gBUartTotalByte = 0x00;				//清数据字节总数寄存器
@@ -489,42 +485,42 @@ void ClearBUFF(unsigned char *cleardata, unsigned int len)
 *****************************************************************************/
 void Uart1Decode(void)
 {
-	unsigned char write_flag;
+unsigned char write_flag;
 	unsigned int EE_addr;
 	unsigned char EE_addrH;
 	unsigned char EE_addrL;
 	__U32_Def val;//EMU数据
 	unsigned char buf[6];
+	//unsigned char temp[4];
 	//操作EEPROM
 	if(UartRxBuf1[0] == 0xEE)
 	{
 		if(UartRxBuf1[1] == 0x01)//读
 		{
-			EE_addrH = UartRxBuf1[2];
-			EE_addrL = UartRxBuf1[3];
+			EE_addrH = UartRxBuf1[3];
+			EE_addrL = UartRxBuf1[4];
 			EE_addr = EE_addrH;
 			EE_addr = (EE_addr<<8) + EE_addrL;
 			//读数据
-			EE_to_RAM(EE_addr, &UartTxBuf1[2], 4);
+			EE_to_RAM(EE_addr, &UartTxBuf1[2], UartRxBuf1[2]);
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
-			gBUartTotalByte1 = 6;
+			gBUartTotalByte1 = 2+UartRxBuf1[2];
 			gBUartLen1		= 0x00;
 		}
 		else if(UartRxBuf1[1] == 0x02)//写
 		{
-			EE_addrH = UartRxBuf1[2];
-			EE_addrL = UartRxBuf1[3];
+			EE_addrH = UartRxBuf1[3];
+			EE_addrL = UartRxBuf1[4];
 			EE_addr = EE_addrH;
 			EE_addr = (EE_addr<<8) + EE_addrL;
-
-		 	VER_WRbytes(EE_addr,&UartRxBuf1[4],1, 1);	//写入数据
+		 	VER_WRbytes(EE_addr,&UartRxBuf1[5],UartRxBuf1[2],1);	//写入数据
 			//读出写入数据
 			Delay_ms(100);
-			EE_to_RAM(EE_addr, &UartTxBuf1[2], 1);
+			EE_to_RAM(EE_addr, &UartTxBuf1[2], UartRxBuf1[2]);
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
-			gBUartTotalByte1 = 3;
+			gBUartTotalByte1 = 2+UartRxBuf1[2];
 			gBUartLen1		= 0x00;
 		}
 	}
@@ -567,38 +563,44 @@ void Uart1Decode(void)
 
 			else if(UartRxBuf1[2] == 0xAA)//第一次输入表号
 			{
-				buf[0] = UartRxBuf1[3];
-				buf[1] = UartRxBuf1[4];
-				buf[2] = UartRxBuf1[5];
-				buf[3] = UartRxBuf1[6];
-				buf[4] = UartRxBuf1[7];
-				buf[5] = UartRxBuf1[8];
-				param_data.address_input_flag[0] = 0xA5;
+				param_data.address_input_flag[0] = UartRxBuf1[3];
+				param_data.address_input_flag[1] = UartRxBuf1[4];
+				param_data.address_input_flag[2] = UartRxBuf1[5];
+				param_data.address_input_flag[3] = UartRxBuf1[6];
+				param_data.address_input_flag[4] = UartRxBuf1[7];
+				param_data.address_input_flag[5] = UartRxBuf1[8];
+				param_data.address_input_flag[6] = 0xA5;
 			}
 			else if(UartRxBuf1[2] == 0xBB)//第二次输入表号
 			{
-				if(CmpBUFF(buf,UartRxBuf1,6))
-				{
+
 					buf[0] = UartRxBuf1[3];
 					buf[1] = UartRxBuf1[4];
 					buf[2] = UartRxBuf1[5];
 					buf[3] = UartRxBuf1[6];
 					buf[4] = UartRxBuf1[7];
 					buf[5] = UartRxBuf1[8];
-					param_data.address_input_flag[1] = 0xA5;
-				}
+
+					param_data.address_input_flag[7] = 0xA5;
+
 
 			}
 			//两次都一致，发出表号
-			if((param_data.address_input_flag[0] == 0xA5)&&(param_data.address_input_flag[1] = 0xA5))
+			if((param_data.address_input_flag[6] == 0xA5)&&(param_data.address_input_flag[7] == 0xA5))
 			{
+				if(param_data.address_input_flag[0] != buf[0]) return;
+				if(param_data.address_input_flag[1] != buf[1]) return;
+				if(param_data.address_input_flag[2] != buf[2]) return;
+				if(param_data.address_input_flag[3] != buf[3]) return;
+				if(param_data.address_input_flag[4] != buf[4]) return;
+				if(param_data.address_input_flag[5] != buf[5]) return;
 				param_data.meter_address[0] = buf[0];
 				param_data.meter_address[1] = buf[1];
 				param_data.meter_address[2] = buf[2];
 				param_data.meter_address[3] = buf[3];
 				param_data.meter_address[4] = buf[4];
 				param_data.meter_address[5] = buf[5];
-				VER_WRbytes(EE_Meter_address,&param_data.meter_address[0],6, 1);//向EEPROM中写入表号
+				VER_WRbytes(EE_Meter_address,&param_data.meter_address[0],6,1);//向EEPROM中写入表号
 			}
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
@@ -653,7 +655,7 @@ void Uart1Decode(void)
 	}
 	gBUartCon1  = Bin(00000000);
 	gbUartTran1 = 1;									//设置发送数据状态标志
-	TI1 = 1;											//软件置一，中断响应
+	TI1 = 1;											//软件置一，中断响应											//软件置一，中断响应
 }
 
 

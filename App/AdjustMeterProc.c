@@ -50,8 +50,8 @@ void AdjustMeterInit(void)
 		//float adjust_temp;
 		unsigned long temp;
 	  val.val = 0;
-    //Factory Mode && Calibration Flag
-    if((0xF001 == gbFgKeyProg) && (g_Cal.Flag  == D_Initing))
+    //Factory Mode && Calibration Flag && π¶¬ Œ»∂®
+    if((0xF001 == gbFgKeyProg) && (g_Cal.Flag  == D_Initing) && (1 == AverStablePowerJudge()))
     {
         switch(g_Cal.Step)
         {

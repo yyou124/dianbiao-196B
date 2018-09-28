@@ -98,7 +98,7 @@ UARTDRIVER_EXT  void ClearBUFF(unsigned char *cleardata, unsigned int len);
 //  UARTDRIVER_EXT unsigned char xdata gb485TxdLen;
 
 #define     MAX_UART_DATA_LEN       64
-#define     PACKAGE_RXD_TIMEOUT     100
+#define     PACKAGE_RXD_TIMEOUT     80
 #define     PACKAGE_RXD_TIMEOUT1     20
 UARTDRIVER_EXT unsigned char xdata Res;
 UARTDRIVER_EXT unsigned char xdata Res1;
@@ -111,6 +111,7 @@ UARTDRIVER_EXT unsigned char xdata gbUartAdjust;//通讯校表启动标志
 extern unsigned char 	UartTxBuf[MAX_UART_DATA_LEN];				//接收数据缓冲器
 extern unsigned char   UartRxBuf[MAX_UART_DATA_LEN];				//发送数据缓冲器
 extern unsigned char data	gBUartLen;									//字节个数计数器
+extern unsigned int data	gWUartRxdTimeOut;							//传送一个数据包超时计时器
 /*
 UARTDRIVER_EXT unsigned char UART_Rx_Flag;
 UARTDRIVER_EXT unsigned char xdata RxBuffer[RxBufferSize];

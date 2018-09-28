@@ -740,7 +740,7 @@ void TimeTaskThread()
         if(DelayFlag == 4) DelayFlag++;//执行断电一次命令
         if(DelayFlag == 5) DelayFlag++;//执行断电一次命令
         if(DelayFlag == 6) RealyCtrl(0);//通电
-        //自动上报进程&判断安装模块
+        //判断安装模块
         if(g_Tran.AutoReportCount != 0)
         {
             //判断安装的模块
@@ -751,26 +751,12 @@ void TimeTaskThread()
                  {
                     NB_LORA_PANDUAN(&NB_LORA[0]);
                     VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
-                     g_Tran.AutoReportCount = 10;
+//									  if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
+//												 NB_Error();
+                    g_Tran.AutoReportCount = 1;//1分钟后 发送上电握手信号
                  }
             }
-						
-            //如果安装了NB模块，等待初始化结束启动上报进程
-            else if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
-            {
-                if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))
-                {
-                     g_Tran.AutoReportCount --;
 
-                }
-            }
-            //安装LORA模块，为透传模式，直接发送
-            else if((NB_LORA[0] == 0xAA)&&(NB_LORA[1] == 0xAA))
-            {
-                g_Tran.AutoReportCount --;
-            }
-            if(g_Tran.AutoReportCount == 0)
-              g_Tran.AutoReportFlag = 1;
         }
 
         //显示相关进程
@@ -778,13 +764,13 @@ void TimeTaskThread()
         {
             g_Disp.PollingDisplayCount--;
         }
-         //如果安装NB模块，启动NB初始化
+         //如果安装NB模块&&状态正常，启动NB初始化
          if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
          {
             if(g_NB.ReInitTime != 0)
             {
                 g_NB.ReInitTime --;
-                if(g_NB.ReInitTime  == 0x00)//超过初始化时间，重新进行初始化
+                if((g_NB.ReInitTime  == 0x00)&&(g_Flag.ALARM[0] == 0x00)&&(g_Flag.ALARM[0] == 0x00))//超过初始化时间，重新进行初始化
                     NB_Init();
             }
          }
@@ -809,10 +795,39 @@ void TimeTaskThread()
     {
         g_Flag.Clk &= ~C_MIN;
 
+        //自动上报进程
+        if(g_Tran.AutoReportCount != 0)
+        {
+
+            //如果安装了NB模块，等待初始化结束启动上报进程
+            if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
+            {
+                if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))
+                {
+                     //检查NB模块硬件状态
+                    NB_LORA_PANDUAN(&NB_LORA[0]);
+                    if(g_NB.InitStep != 0x00) //重新进行初始化
+                    {
+                        g_NB.InitStep = 1;
+                        g_NB.ReInitTime = 2;
+                    }
+                    NB_Error();
+                     g_Tran.AutoReportCount --;
+                }
+            }
+            //安装LORA模块，为透传模式，直接发送
+            else if((NB_LORA[0] == 0xAA)&&(NB_LORA[1] == 0xAA))
+            {
+                g_Tran.AutoReportCount --;
+            }
+            if(g_Tran.AutoReportCount == 0)
+              g_Tran.AutoReportFlag = 1;
+        }
+
         //检查模块安装状态
 //       NB_LORA_PANDUAN(&NB_LORA[0]);
 //	    SEQ_write(EE_NB_LORA, &NB_LORA[0], 2);
-		VER_RDbytes(EE_NB_LORA, &NB_LORA[0], 2);
+				//VER_RDbytes(EE_NB_LORA, &NB_LORA[0], 2);
         //继电器状态
         VER_RDbytes(RELAY_STATUS, &DelayStatus[0], 2);
         //NB初始化状态
@@ -833,11 +848,6 @@ void TimeTaskThread()
         KWH_RKWH_dot();                            //小数位校验
         ECRunKwh();                                //60秒刷新组合有功
 
-        //VER_RDbytes(EE_QKWH0 , &QKWH[0], 3);       //无功正向
-        //VER_RDbytes(EE_RQKWH0, &RQKWH[0], 3);      //无功反向
-        //QKWH_RQKWH_dot();                          //小数位
-        //ECRunQKwh();							   //60秒刷新组合无功
-        //ECRunQKwh_RQKwh();						   //60秒刷新正向无功，反向无功
 
         //VER_RDbytes(LMON_EC, &KWH_LMON[0], 4);
 
@@ -872,24 +882,7 @@ void TimeTaskThread()
     if (g_Flag.Clk & C_DAY)
     {
         g_Flag.Clk &= ~C_DAY;
-        //读当天总电量
-        //读昨天总电量
-       /*  VER_RDbytes(EE_WHD_LDAY,&LDayBuff[0],4);
-        //写入当天总电量
-        VER_WRbytes(EE_WHD_LDAY,&DayBuff[0],4,1);
-        //做差，求当天用电量,
-        BCD_MINUS_N(&DayBuff[0],&LDayBuff[0],4);
-        //读EE地址偏移，并验证
-        VER_RDbytes(EE_DAY_NUM,&day_shift,1);
-        if(day_shift == 30)
-        {
-            day_shift = 0;
-        }
-        //写入当天电量
-        VER_WRbytes(EE_WHD_DAY1+day_shift*6,&DayBuff[0],4,1);
-        //地址偏移储存
-        day_shift++;
-        VER_WRbytes(EE_DAY_NUM,&day_shift,1,1); */
+
     }
 
 

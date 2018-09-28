@@ -228,7 +228,7 @@ typedef struct{
                  unsigned char  meter_factory[2];
 				 //unsigned char  password_0[3];	   		//0¼¶ÃÜÂë
 				 //unsigned char  password_2[3];	   		//2¼¶ÃÜÂë
-                 unsigned char address_input_flag[4];
+                 unsigned char address_input_flag[8];
 }__PARAM_DATA;
 MEASUREPROC_EXT __PARAM_DATA xdata param_data;
 

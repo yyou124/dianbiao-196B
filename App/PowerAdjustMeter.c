@@ -83,9 +83,14 @@ void PowerAdjThread(void)                					//脉冲校表线程
 			{
 				//校表结束，将校表参数及FLAG写入EEPROM中
 				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);
-				//写入电量FLAG
+				//写入电量，整数
 				MemInitSet(&kwh_value.integer[0],0x00,5);
 				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5, 1);
+				//写入电量，小数
+				EEPromSectorErase(0x05);
+				EEPromByteProgram(0x05,0x31,0x00);
+				EEPromByteProgram(0x05,0x32,0x00);
+				EEPromByteProgram(0x05,0x01,0xAA);
 				//写入校表结束标志
 				MemInitSet(&g_Buffer[0], 0xA5, 4);
 				VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);

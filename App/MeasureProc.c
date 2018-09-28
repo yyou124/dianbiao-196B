@@ -626,12 +626,8 @@ void NB_LORA_PANDUAN(unsigned char *flag)
 	char *dest;
 	dest=&p;
 	sprintf(dest,"AT\r\n");
-	UART0_SendString((unsigned char*)dest,strlen(dest));
-	Delay_ms(300);
-	UART0_SendString((unsigned char*)dest,strlen(dest));
-	Delay_ms(300);
-	RSTSTAT &= Bin(11111000);	//清看门狗
-	if(ATcmd_Transmit(dest,"OK",1000))//失败，不是NB模块
+
+	if(ATcmd_Transmit(dest,"OK",2000))//失败，不是NB模块
 	{
 		flag[0] = 0xAA;//判断为LORA模块
 		flag[1] = 0xAA;
@@ -648,6 +644,13 @@ void NB_LORA_PANDUAN(unsigned char *flag)
 	{
 		flag[0] = 0xBB;
 		flag[1] = 0xBB;
+		SBRTH &= (~0x80);//停止串口波特率发生2
+		 SBRTL = UART_BAUDRATE_115200&0x00FF;     		//设置串口0波特率发生器
+		 SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
+
+		 SFINE &= Bin(11110000);
+		 SFINE |= (UART_BFINE_115200)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+		 SBRTH |= 0x80;                          	//串口0波特率发生器使能
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -714,22 +717,24 @@ void Init_RAM(void)
 
     //检查EEPROM中首次上电标志，首次上电自动进入工厂模式,启动校表程序
 	//如果EEPROM中的EE_FirstProg_FLAG第一次上电标志不为0xA5(4byte)
-	//则gbFgKeyProg = 0xF001，启动校表程序
+//	//则gbFgKeyProg = 0xF001，启动校表程序
+//	MemInitSet(&g_Buffer[0], 0x00, 4);
+//	VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
 	EE_to_RAM(EE_FirstProg_FLAG, &g_Buffer[0], 4);
     if ((g_Buffer[0] != 0xA5) && (g_Buffer[1] != 0xA5) && (g_Buffer[2] != 0xA5) && (g_Buffer[3] != 0xA5))
     {
 		gbFgKeyProg = 0xF001;
-		VER_WRbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2, 1);//启动校表程序Flag
+		SEQ_write(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);//启动校表程序Flag
 		//此处在校表程序结束后，置FLGA
-        //MemInitSet(&g_Buffer[0], 0xA5, 4);
+        //MemInitSet(&g_Buffer[0], 0x00, 4);
        //SEQ_write(EE_FirstProg_FLAG, &g_Buffer[0], 4);
     }
 	else
 	{
 		gbFgKeyProg = 0x0000;
-		VER_WRbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2, 1);//启动校表程序Flag
+		SEQ_write(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);//启动校表程序Flag
 	}
-	VER_RDbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);
+	EE_to_RAM(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);
 
     //检查EEPROM时钟修正参数，校验正确则修正，否则跳过
 	Init_RTCAdjustProc();//不使用RTC时钟补偿
