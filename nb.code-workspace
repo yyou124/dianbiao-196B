@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "App"
+		},
+		{
+			"path": "Drive"
+		},
+		{
+			"path": "Head"
+		},
+		{
+			"path": "MCU"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"config.h": "c",
+			"intrins.h": "c",
+			"uartdriver.h": "c",
+			"math.h": "c",
+			"measureproc.h": "c",
+			"642b_int.h": "c",
+			"sh79f6432.h": "c",
+			"642b_mcu.h": "c"
+		}
+	}
+}

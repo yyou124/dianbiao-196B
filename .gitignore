@@ -1,0 +1,7 @@
+Debug
+List
+Listings
+Objects
+*.uvgui.*
+*.uvopt
+*.cfg
