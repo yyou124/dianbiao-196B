@@ -117,31 +117,31 @@ unsigned char ATcmd_Transmit(unsigned char *AT_str, char *Repl_str, unsigned int
 	{
 		if(g_NB.UARTReceiveOK)//接收完成标志
 		{
-			while(UartRxBuf[Rx_len] == Repl_str[Repl_len]&&(Wait_ms>(NBCount10ms*10)))//对比一个字符
+			while(UartRxBuf1[Rx_len] == Repl_str[Repl_len]&&(Wait_ms>(NBCount10ms*10)))//对比一个字符
 			{
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
 					NBCount10ms = 0;
 					g_NB.UARTReceiveOK = 0;
-					REN = 1;
-					ClearBUFF(UartRxBuf,countof(UartRxBuf));
+					REN1 = 1;
+					ClearBUFF(UartRxBuf1,countof(UartRxBuf1));
 					return 0;
 				}
 				RSTSTAT &= Bin(11111000);//清看门狗
 				Rx_len++;
 				Repl_len++;
-				if(Repl_str[Repl_len] != UartRxBuf[Rx_len]) break;//不符合，跳出
+				if(Repl_str[Repl_len] != UartRxBuf1[Rx_len]) break;//不符合，跳出
 			}
 			RSTSTAT &= Bin(11111000);//清看门狗
 			Repl_len = 0;
 			Rx_len ++;
-			if(Rx_len>gBUartLen+1) Rx_len=0;
+			if(Rx_len>gBUartLen1+1) Rx_len=0;
 		}
 		RSTSTAT &= Bin(11111000);//清看门狗
 	}
 	g_NB.UARTReceiveOK = 0;
-	REN = 1;
-	ClearBUFF(UartRxBuf,countof(UartRxBuf));
+	REN1 = 1;
+	ClearBUFF(UartRxBuf1,countof(UartRxBuf1));
 
 	return 1;
 }
@@ -178,31 +178,31 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 	{
 		if(g_NB.UARTReceiveOK)//接收完成标志
 		{
-			while(UartRxBuf[Rx_len] == Repl_str[Repl_len]&&(Wait_ms>(NBCount10ms*10)))//对比一个字符
+			while(UartRxBuf1[Rx_len] == Repl_str[Repl_len]&&(Wait_ms>(NBCount10ms*10)))//对比一个字符
 			{
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
 					NBCount10ms = 0;
 					g_NB.UARTReceiveOK = 0;
-					REN = 1;
-					ClearBUFF(UartRxBuf,countof(UartRxBuf));
+					REN1 = 1;
+					ClearBUFF(UartRxBuf1,countof(UartRxBuf1));
 
 					return 0;
 				}
 				Rx_len++;
 				Repl_len++;
-				if(Repl_str[Repl_len] != UartRxBuf[Rx_len]) break;//不符合，跳出
+				if(Repl_str[Repl_len] != UartRxBuf1[Rx_len]) break;//不符合，跳出
 			}
 			RSTSTAT &= Bin(11111000);//清看门狗
 			Repl_len = 0;
 			Rx_len ++;
-			if(Rx_len>gBUartLen+1) Rx_len=0;
+			if(Rx_len>gBUartLen1+1) Rx_len=0;
 		}
 		RSTSTAT &= Bin(11111000);//清看门狗
 	}
 	g_NB.UARTReceiveOK = 0;
-	REN = 1;
-	ClearBUFF(UartRxBuf,countof(UartRxBuf));
+	REN1 = 1;
+	ClearBUFF(UartRxBuf1,countof(UartRxBuf1));
 	return 1;
 }
 
@@ -233,36 +233,36 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned cha
 	{
 		if(g_NB.UARTReceiveOK)//接收完成标志
 		{
-			while(UartRxBuf[Rx_len] == Repl_str[Repl_len])//对比一个字符
+			while(UartRxBuf1[Rx_len] == Repl_str[Repl_len])//对比一个字符
 			{
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
 					//":"后面有空格，加一位
-					for(i=0;i<gBUartLen-Rx_len-2;i++)
-						Get_str[i] = UartRxBuf[i+Rx_len+2];
+					for(i=0;i<gBUartLen1-Rx_len-2;i++)
+						Get_str[i] = UartRxBuf1[i+Rx_len+2];
 					//字符串函数能否在单片机中使用？
-					// p = strtok((char *)UartRxBuf, " ");//分离收到的字符串
+					// p = strtok((char *)UartRxBuf1, " ");//分离收到的字符串
 					// p = strtok(NULL, ":");//取后半段
 					// strcpy(Get_str,p);
 					NBCount10ms = 0;
 					g_NB.UARTReceiveOK = 0;
-					REN = 1;
-					ClearBUFF(UartRxBuf,countof(UartRxBuf));
+					REN1 = 1;
+					ClearBUFF(UartRxBuf1,countof(UartRxBuf1));
 					return 0;
 				}
 				Rx_len++;
 				Repl_len++;
-				if(Repl_str[Repl_len] != UartRxBuf[Rx_len]) break;//不符合，跳出
+				if(Repl_str[Repl_len] != UartRxBuf1[Rx_len]) break;//不符合，跳出
 			}
 			RSTSTAT &= Bin(11111000);//清看门狗
 			Repl_len = 0;
 			Rx_len ++;
-			if(Rx_len>gBUartLen+1) Rx_len=0;
+			if(Rx_len>gBUartLen1+1) Rx_len=0;
 		}
 	}
 	g_NB.UARTReceiveOK = 0;
-	REN = 1;
-	ClearBUFF(UartRxBuf,countof(UartRxBuf));
+	REN1 = 1;
+	ClearBUFF(UartRxBuf1,countof(UartRxBuf1));
 	return 1;
 
 }
@@ -284,7 +284,7 @@ unsigned char NBdata_Receive_MTK(char *Repl_str, unsigned char *Get_str, unsigne
      unsigned char Rx_len = 0;
      unsigned char shuzu_len = 0;
      unsigned char i;
-	 REN = 0;
+	 REN1 = 0;
 	while(1)
 	{
 		while (Repl_str[Rx_len] == shuzu[shuzu_len]) //对比一个字符

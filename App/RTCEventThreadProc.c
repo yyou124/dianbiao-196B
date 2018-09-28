@@ -745,43 +745,7 @@ void TimeTaskThread()
             }
         }
         //判断安装模块
-        if(g_Tran.AutoReportCount != 0)
-        {
-            //判断安装的模块
-            if((NB_LORA[0] == 0x00)&&(NB_LORA[1] == 0x00))
-            {
-                g_Tran.AutoReportCount --;
-                if( g_Tran.AutoReportCount == 1)
-                {
-                    NB_LORA_PANDUAN(&NB_LORA[0]);
-                    VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
-//					if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
-//						NB_Error();
-                }
-            }
-        }
-         //如果安装NB模块，启动NB初始化
-        if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
-        {
-            if(g_NB.ReInitTime != 0)
-            {
-                g_NB.ReInitTime --;
-                if((g_NB.ReInitTime  == 0x00))//超过初始化时间，重新进行初始化
-                {
-                    if((g_NB.InitState[0] == NB_Init_Reset) && (g_NB.InitState[1] == NB_Init_Reset))
-                    {
-                        UART0_SendString("AT+QRST=1\r\n",11);
-                        g_NB.InitStep = 1;
-                        g_NB.ReInitTime = 10;
-                        g_NB.InitState[0] = 0x00;
-                        g_NB.InitState[1] = 0x00;
-                        g_NB.ReInitTime = 0;
-                    }
-                    else
-                        NB_Init();
-                }
-            }
-        }
+
 
          //显示相关进程
         if (g_Disp.PollingDisplayCount != 0)//显示相关，轮显倒计时
@@ -812,44 +776,26 @@ void TimeTaskThread()
         if(g_Tran.AutoReportCount != 0)
         {
             //如果安装了NB模块，等待初始化结束启动上报进程
-            if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
-            {
-                if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))
-                {
-                    //检查NB模块硬件状态
-                    // NB_LORA_PANDUAN(&NB_LORA[0]);
-                     //通讯相关进程，超过3次后台无ACK回应，显示错误
 
-                     g_Tran.AutoReportCount --;
-                }
-            }
-            //安装LORA模块，为透传模式，直接发送
-            else if((NB_LORA[0] == 0xAA)&&(NB_LORA[1] == 0xAA))
-            {
+
                 g_Tran.AutoReportCount --;
-            }
+
             //判断ACK状态
             if(g_Tran.AutoReportCount == 0)
             {
                  if(g_Tran.AutoReportTime >3)
                     {
-                        UART0_SendString("AT+CFUN=0\r\n",11);//关闭NB模块
-                        g_NB.InitCount = 0x00;
-                        g_NB.ReInitTime = NB_RETRY_TIME;
+
                         g_Tran.AutoReportTime = 0;
-                        g_NB.InitStep = 1;
-                        g_NB.InitState[0] = NB_Init_Reset;
-                        g_NB.InitState[1] = NB_Init_Reset;
+
+
                         g_Flag.ALARM[0] = 0x0a;
                         g_Flag.ALARM[1] = 0x00;
                         g_Tran.AutoReportFlag = NO_ACK_RD;
                     }
                 if(g_Tran.AutoReportFlag == WAITING_ACK)
                 {
-                    g_NB.InitStep = 1;
-                    g_NB.ReInitTime = 2;
-                    g_NB.InitState[0] = 0x00;
-                    g_NB.InitState[1] = 0x00;
+
 
                     g_Tran.AutoReportFlag = COUNT_DOWN;
                 }

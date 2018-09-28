@@ -674,47 +674,7 @@ void ReadAutoRepotrTime(void)
 		g_Commu.AutoReportTimeSetAck = BCD2toINT(&temp[2]);//ACK相应时间
 	}
 }
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
-** 函数名称: ConstPara_Chk
-** 函数描述: 初始化RAM
-** 输入参数: 无
-** 输出参数: 无
-*******************************************************************************************/
-void NB_LORA_PANDUAN(unsigned char *flag)
-{
-	char p[5];
-	char *dest;
-	dest=&p;
-	sprintf(dest,"AT\r\n");
-	//UART0_SendString("AT\r\n",4);
-	//Delay_ms(1000);
-	if(ATcmd_Transmit(dest,"OK",2000))//失败，不是NB模块
-	{
-		flag[0] = 0xAA;//判断为LORA模块
-		flag[1] = 0xAA;
-		//如果安装LORA模块 改变串口波特率
-		 SBRTH &= (~0x80);//停止串口波特率发生2
-		 SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
-		 SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
 
-		 SFINE &= Bin(11110000);
-		 SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
-		 SBRTH |= 0x80;                          	//串口0波特率发生器使能
-	}
-	else				//判断为NB模块
-	{
-		flag[0] = 0xBB;
-		flag[1] = 0xBB;
-		SBRTH &= (~0x80);//停止串口波特率发生2
-		 SBRTL = UART_BAUDRATE_115200&0x00FF;     		//设置串口0波特率发生器
-		 SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
-
-		 SFINE &= Bin(11110000);
-		 SFINE |= (UART_BFINE_115200)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
-		 SBRTH |= 0x80;                          	//串口0波特率发生器使能
-	}
-}
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
 ** 函数名称: Init_RAM
@@ -785,7 +745,7 @@ void Init_RAM(void)
 
 	//安装的模块FLAG初始化
 	//NB_LORA_PANDUAN(&NB_LORA[0]);
-	MemInitSet(&NB_LORA[0],0x00,2);
+	MemInitSet(&NB_LORA[0],0xAA,2);
 	VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
 	//继电器相关初始化
 	VER_RDbytes(RELAY_STATUS, &DelayStatus[0], 2);
@@ -804,7 +764,7 @@ void Init_RAM(void)
 	g_Tran.PwoerOn = 1; //上电握手
 	//g_Tran.
 	g_Tran.AutoReportTime = 0;	//自动上报尝试次数
-	g_Tran.AutoReportCount = NB_POWER_ON;//自动上报时间&通信时间初始化
+	g_Tran.AutoReportCount = 1;//自动上报时间
 	g_Tran.AutoReportFlag = 0;	//自动上报FLAG
 
 	g_NB.UARTReceiveOK = 0;			//NB数据UART接收完成FLAG
