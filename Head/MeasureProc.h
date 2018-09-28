@@ -81,6 +81,7 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define KWHD        kwh_value.dec
 #define KWH         kwh_value.integer
 
+
 // #define RKWHP       rkwh_value.pluse        		//总反向有功
 // #define RKWHD       rkwh_value.dec
 // #define RKWH        rkwh_value.integer
@@ -108,7 +109,7 @@ typedef struct{
                 //unsigned int   irms1gain; //通道1瞬时电流增益
                 unsigned int irms2gain;  //通道2瞬时电流增益
 
-                //unsigned int   w1gain;	  //通道1的功率修正	 //看下正偏多还是负偏多,0xa6/0xffff=0.0025 ,(0xffff-0xf6ea)/0xffff=0.03
+				//unsigned int   w1gain;	  //通道1的功率修正	 //看下正偏多还是负偏多,0xa6/0xffff=0.0025 ,(0xffff-0xf6ea)/0xffff=0.03
                 unsigned int   w2gain;	  //通道2的功率修正
 
 				//unsigned int   p1cal;	  //通道1的相位修正
@@ -243,9 +244,10 @@ MEASUREPROC_EXT __PARAM_DATA xdata param_data;
 MEASUREPROC_EXT bit gbSecFlag;                    		//延时1s标志
 MEASUREPROC_EXT bit gbLowPWRFlag;
 
-MEASUREPROC_EXT unsigned char xdata keytime[1];	  		//开盖键
+MEASUREPROC_EXT unsigned char xdata EE_KHH_address;         //计算后的用电量EEPROM存储地址
+//MEASUREPROC_EXT unsigned char xdata keytime[1];	  		//开盖键
 MEASUREPROC_EXT unsigned int xdata gbPCNTCount;
-MEASUREPROC_EXT unsigned char xdata g_TCoverDly;
+//MEASUREPROC_EXT unsigned char xdata g_TCoverDly;
 
 
 
@@ -257,9 +259,9 @@ MEASUREPROC_EXT unsigned char data PwrCnt;
 
 
 MEASUREPROC_EXT FLAG xdata g_Flag;
-MEASUREPROC_EXT unsigned char g_Clearn;
-MEASUREPROC_EXT unsigned char g_CoverEnableDly;
-MEASUREPROC_EXT unsigned char g_EcDecDot_Config;	    //电量小数位设置
+//MEASUREPROC_EXT unsigned char g_Clearn;
+//MEASUREPROC_EXT unsigned char g_CoverEnableDly;
+//MEASUREPROC_EXT unsigned char g_EcDecDot_Config;	    //电量小数位设置
 
 
 MEASUREPROC_EXT unsigned char xdata g_AllDisDly;
@@ -344,6 +346,7 @@ MEASUREPROC_EXT void Init_RAM(void);//RAM初始化，已修改
 MEASUREPROC_EXT void ConstPara_Init(unsigned char meter_const, unsigned char Cmd); //脉冲常数初始化，已修改
 MEASUREPROC_EXT unsigned int ConstPara_Chk(void);
 
+MEASUREPROC_EXT void EE_KWH_shift(void);        //用电量的EEPROM地址计算
 MEASUREPROC_EXT void check_dotKWHD(void);  			 	//check 正向有功小数部分,已修改
 //MEASUREPROC_EXT void check_dotRKWHD(void); 			 	//check 反向有功小数部分
 MEASUREPROC_EXT void KWH_RKWH_dot(void);			 	//check 正向，反向有功小数部分，已修改，去掉了反向部分

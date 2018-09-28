@@ -82,10 +82,13 @@ void PowerAdjThread(void)                					//脉冲校表线程
 			else if(g_Cal.Flag  == D_InitEnd)				    //结束校表程序
 			{
 				//校表结束，将校表参数及FLAG写入EEPROM中
-				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);
+				VER_WRbytes_Limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
 				//写入电量，整数
 				MemInitSet(&kwh_value.integer[0],0x00,5);
 				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5, 1);
+				//存储地址初始化
+                EE_KHH_address = EE_KWH0;
+                SEQ_write(EE_KWH_ADDRESS,(unsigned char *)&EE_KHH_address,1);
 				//写入电量，小数
 				EEPromSectorErase(0x05);
 				EEPromByteProgram(0x05,0x31,0x00);

@@ -176,7 +176,7 @@ unsigned char xdata   TPMOD1   _at_  0xFFE1;
 void PWONInit_LCD(void)
 {
 	unsigned char data i;
-	LCDCON = Bin(00000111);          	//4COM，1/3偏置，驱动电压0.8*VOUT
+	LCDCON = Bin(00000100);          	//4COM，1/3偏置，驱动电压0.8*VOUT
 	LCDCON1= Bin(00000010);		     	//传统模式，3*20K偏压电阻
 	LCDCON |= Bin(10000000);		 	//开启LCD
 	for (i=0; i<LCDFRAME; i++)

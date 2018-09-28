@@ -323,3 +323,27 @@ unsigned char StringToHexGroup(unsigned char *OutHexBuffer, char *InStrBuffer, u
  }
  return 1;
 }
+////////////////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************************
+** 函数名称: StrToInt
+** 函数描述: 将字符串转化为INT类型
+** 输入参数: *Inbuf待转换字符串
+** 输出参数: int值
+*******************************************************************************************/
+unsigned int StrToInt(const char* Inbuf)
+{
+    unsigned int re = 0;
+    unsigned char tmp = 0;
+    while (1) {
+        if (*Inbuf != 0x00) {
+            tmp = tmp * 10 + *Inbuf - '0';
+        } else {
+            re = (re << 8) + tmp;
+            if (*Inbuf == 0x00)
+                break;
+            tmp = 0;
+        }
+        Inbuf++;
+    }
+    return re;
+}

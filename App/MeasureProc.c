@@ -50,8 +50,36 @@ unsigned int xdata UpGradeFlg _at_ 0x0A00;
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************************
+** 函数名称: EE_KWH_shift
+** 函数描述: 根据电量计算EEPROM中的存储地址
+** 输入参数: 无
+** 输出参数:
+*******************************************************************************************/
+void EE_KWH_shift(void)
+{
+    unsigned char buff[2];
+    unsigned int hex_data[2];
+	unsigned char temp;
 
+	EE_to_RAM(EE_KWH_ADDRESS,(unsigned char *)&temp,1);	//读出用电量地址
+	temp = (temp-EE_KWH0)/EE_KWH_SHIFT;	//计算偏移数量
+	hex_data[0] = temp * EE_KWH_MAX;	//计算当前偏移地址的用电量
 
+    ReverseCpy(buff, &KWH[2], 2);//从万位提取用电量
+    hex_data[1] = BCD2toINT(buff);	//计算实际用电量
+
+	if(hex_data[1]-hex_data[0] >= EE_KWH_MAX) //更新用电量存储地址
+	{
+		hex_data[1] = hex_data[1] / EE_KWH_MAX;
+		EE_KHH_address = hex_data[1] * EE_KWH_SHIFT + EE_KWH0;
+		if(EE_KHH_address>0xFE)
+			EE_KHH_address = 0x00;
+    SEQ_write(EE_KWH_ADDRESS,(unsigned char *)&EE_KHH_address,1);
+	}
+
+}
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
 ** 函数名称: ALARMLED
@@ -626,31 +654,20 @@ void NB_LORA_PANDUAN(unsigned char *flag)
 	char *dest;
 	dest=&p;
 	sprintf(dest,"AT\r\n");
-
-	if(ATcmd_Transmit(dest,"OK",2000))//失败，不是NB模块
+	UART0_SendString((unsigned char*)dest,strlen(dest));
+	Delay_ms(300);
+	UART0_SendString((unsigned char*)dest,strlen(dest));
+	Delay_ms(300);
+	RSTSTAT &= Bin(11111000);	//清看门狗
+	if(ATcmd_Transmit(dest,"OK",1000))//失败，不是NB模块
 	{
 		flag[0] = 0xAA;//判断为LORA模块
 		flag[1] = 0xAA;
-		//如果安装LORA模块 改变串口波特率
-		 SBRTH &= (~0x80);//停止串口波特率发生2
-		 SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
-		 SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
-
-		 SFINE &= Bin(11110000);
-		 SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
-		 SBRTH |= 0x80;                          	//串口0波特率发生器使能
 	}
 	else				//判断为NB模块
 	{
 		flag[0] = 0xBB;
 		flag[1] = 0xBB;
-		SBRTH &= (~0x80);//停止串口波特率发生2
-		 SBRTL = UART_BAUDRATE_115200&0x00FF;     		//设置串口0波特率发生器
-		 SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
-
-		 SFINE &= Bin(11110000);
-		 SFINE |= (UART_BFINE_115200)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
-		 SBRTH |= 0x80;                          	//串口0波特率发生器使能
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -674,8 +691,9 @@ void Init_RAM(void)
     //从EEPROM中读取有功电能：脉冲数，小数点数据
 	ReadMeterFromTOEeprom();
     //从EEPROM中读取有功电能：整数部分，5字节
-	//EE_to_RAM(EE_KWH0, &kwh_value.integer[0], 5);               //有功
-	VER_RDbytes(EE_KWH0, &kwh_value.integer[0], 5);
+	EE_to_RAM(EE_KWH_ADDRESS,(unsigned char *)&EE_KHH_address,1);	//读出用电量地址
+	//加载用电量EEPROM存储地址
+	VER_RDbytes((unsigned int)EE_KHH_address, &kwh_value.integer[0], 5);
 	//计算组合有功：将整数部分与小数点部分组合到一起
 	ECRunKwh();                                     //计算组合有功
 	//读取表号
@@ -718,8 +736,8 @@ void Init_RAM(void)
     //检查EEPROM中首次上电标志，首次上电自动进入工厂模式,启动校表程序
 	//如果EEPROM中的EE_FirstProg_FLAG第一次上电标志不为0xA5(4byte)
 //	//则gbFgKeyProg = 0xF001，启动校表程序
-MemInitSet(&g_Buffer[0], 0x00, 4);
-VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
+// MemInitSet(&g_Buffer[0], 0x00, 4);
+// VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
 	EE_to_RAM(EE_FirstProg_FLAG, &g_Buffer[0], 4);
     if ((g_Buffer[0] != 0xA5) && (g_Buffer[1] != 0xA5) && (g_Buffer[2] != 0xA5) && (g_Buffer[3] != 0xA5))
     {
@@ -759,14 +777,14 @@ VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
 	VER_RDbytes(RELAY_STATUS, &DelayStatus[0], 2);
 	if(gbFgKeyProg == 0x0000)//当前在非工厂模式，可以操作继电器
 	{
-		if((DelayStatus[0] != 0xA5)&&(DelayStatus[1] != 0xA5))
-		{
-			DelayFlag = 1;//继电器断电
-		}
-		else
-		{
-			DelayFlag = 0;//继电器通电
-		}
+	if((DelayStatus[0] != 0xA5)&&(DelayStatus[1] != 0xA5))
+	{
+		DelayFlag = 1;//继电器断电
+	}
+	else
+	{
+		DelayFlag = 0;//继电器通电
+	}
 	}
 
 	//协议相关
@@ -933,7 +951,8 @@ void EnergyProc(void)
             KWHP -= g_ConstPara.Threshold;
             _pop_(IEN0);
 			//有功电量累加,整数部分存入EEPROM中
-			E_operating(EE_KWH0, &kwh_value.integer[0], &KWHD, 6);   //电量处理
+			EE_KWH_shift();
+			E_operating((unsigned int)EE_KHH_address, &kwh_value.integer[0], &KWHD, 6);   //电量处理
 			KWHD1 = KWHD;
 			KWHD2 = KWHD;
 			KWHD3 = KWHD;
@@ -1030,10 +1049,10 @@ void E_operating(unsigned int EE_addr ,unsigned char *IRAM, unsigned char *DRAM,
 	if (!(*DRAM))								 //有可能有小数点的增加1度。1.25==>2.25
 	{
 		//从EEPROM中读出电量到IRAM中
-		EE_to_RAM(EE_addr, IRAM, len);
+		VER_RDbytes(EE_addr, IRAM, len);
 		//r=VER_RDbytes(EE_addr, IRAM, len);
 
-		Add1BCD(IRAM, 6);      					//整数电量累加
+		Add1BCD(IRAM, 5);      					//整数电量累加
 		_nop_();
 		//将刷新后的电量存入EEPROM中
 		VER_WRbytes(EE_addr, IRAM, len, 1);

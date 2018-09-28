@@ -41,9 +41,9 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 //----------------
 
 #define     NB_POWER_ON				5                      //上电信号发出时间
-#define     NB_AUTO_REPORT_TIME		5					//自动上报时间(min)
+#define     NB_AUTO_REPORT_TIME		1*5					//自动上报时间(min)
 
-#define		NB_FRAME_HEAD_NUM		2				//帧头
+#define		NB_FRAME_HEAD_NUM		5				//帧头
 #define		NB_FRAME_DATA_NUM		4				//一些数据的长度
 
 #define		NB_FRAME_HEAD_1			0x00            //帧头1

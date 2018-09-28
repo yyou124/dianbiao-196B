@@ -307,14 +307,14 @@ void Init_EMU(void)
 *******************************************************************************************/
 void ReadEMUFromTOEeprom(void)
 {
-    //if(EE_to_RAM(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data))==0)
-    if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data))==0)
+    if(VER_RDbytes(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data))==0)
+    //if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data))==0)
     {
         //最大电流为60A，脉冲常数为1200，因此将脉冲宽度调整为45ms/90 待定
         adjust_data.gain = 0x43;    //不知道有什么用....
         adjust_data.icont = g_ConstPara.Icont;
 
-        adjust_data.vgain = 22.0;
+        adjust_data.vgain = 0x4000;
         //adjust_data.nmgain = 0x4000;
         //adjust_data.irms1gain = 0x4000;
         adjust_data.irms2gain = 0x4000;
@@ -527,7 +527,7 @@ void EMUTampProc(void)
 		}
         //tmpval = tmpval * (float)((1.4/0.00018/16.0/8388608.0)*1000.0);
         //tmpval = tmpval * I2_Coefficient;				//(float)0.058;
-        curn_temp = ((float)tmpval / adjust_data.irms2gain);
+		curn_temp = ((float)tmpval / (float)adjust_data.irms2gain);
         tmpval = curn_temp * 1000;
 		curn = tmpval;//>> 14;
 
@@ -617,29 +617,33 @@ void EMUTampProc(void)
         Word_BCD2(&g_InsBCD.PowerFactor[0], tmpval);    //放大1000倍的功率因数
 	}
 
-    //test
-//		g_InsBCD.Voltage[0] = 0x00;
-//		g_InsBCD.Voltage[1] = 0x11;
-//		g_InsBCD.Voltage[2] = 0x22;
-//		g_InsBCD.Voltage[3] = 0x33;
-//		g_InsBCD.Current[0] = 0x26;
-//		g_InsBCD.Current[1] = 0x26;
-//		g_InsBCD.Current[2] = 0x26;
-//		g_InsBCD.Current[3] = 0x26;
-//		g_InsBCD.Power[0] = 0x27;
-//		g_InsBCD.Power[1] = 0x27;
-//		g_InsBCD.Power[2] = 0x27;
-//		g_InsBCD.Power[3] = 0x27;
-//		g_InsBCD.RPower[0] = 0x28;
-//		g_InsBCD.RPower[1] = 0x28;
-//		g_InsBCD.RPower[2] = 0x28;
-//		g_InsBCD.RPower[3] = 0x28;
-//		g_InsBCD.APower[0] = 0x29;
-//		g_InsBCD.APower[1] = 0x29;
-//		g_InsBCD.APower[2] = 0x29;
-//		g_InsBCD.APower[3] = 0x29;
-//		g_InsBCD.PowerFactor[0] = 0x30;
-//		g_InsBCD.PowerFactor[1] = 0x30;
-//		g_InsBCD.PowerFactor[2] = 0x30;
-//		g_InsBCD.PowerFactor[3] = 0x30;
+//test
+// g_InsBCD.Voltage[0] = 0x00;//电压
+// g_InsBCD.Voltage[1] = 0x11;
+// g_InsBCD.Voltage[2] = 0x22;
+// g_InsBCD.Voltage[3] = 0x33;
+// g_InsBCD.Current[0] = 0x26;//电流
+// g_InsBCD.Current[1] = 0x26;
+// g_InsBCD.Current[2] = 0x26;
+// g_InsBCD.Current[3] = 0x26;
+// g_InsBCD.Power[0] = 0x27;//功率
+// g_InsBCD.Power[1] = 0x27;
+// g_InsBCD.Power[2] = 0x27;
+// g_InsBCD.Power[3] = 0x27;
+// g_InsBCD.Frequence[0] = 0x99;
+// g_InsBCD.Frequence[1] = 0x49;
+// g_InsBCD.Frequence[2] = 0x00;
+// g_InsBCD.Frequence[3] = 0x00;
+// g_InsBCD.RPower[0] = 0x28;//无功
+// g_InsBCD.RPower[1] = 0x28;
+// g_InsBCD.RPower[2] = 0x28;
+// g_InsBCD.RPower[3] = 0x28;
+// g_InsBCD.APower[0] = 0x29;//视在
+// g_InsBCD.APower[1] = 0x29;
+// g_InsBCD.APower[2] = 0x29;
+// g_InsBCD.APower[3] = 0x29;
+// g_InsBCD.PowerFactor[0] = 0x30;//功率因数
+// g_InsBCD.PowerFactor[1] = 0x30;
+// g_InsBCD.PowerFactor[2] = 0x30;
+// g_InsBCD.PowerFactor[3] = 0x30;
 }

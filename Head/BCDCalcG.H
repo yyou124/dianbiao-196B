@@ -97,5 +97,6 @@ BCDCALCG_EXT void     Long_BCD3(char *Ptr,unsigned long Data)  small;
 BCDCALCG_EXT char  HexToASCII(unsigned char  data_hex);
 BCDCALCG_EXT void HexGroupToString(char *OutStrBuffer, unsigned char *InHexBuffer, unsigned int HexLength);
 BCDCALCG_EXT unsigned char StringToHexGroup(unsigned char *OutHexBuffer, char *InStrBuffer, unsigned int strLength);
+BCDCALCG_EXT unsigned int StrToInt(const char* Inbuf);
 #endif
 

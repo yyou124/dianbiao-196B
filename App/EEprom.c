@@ -373,14 +373,14 @@ void VER_WRbytes(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
-** 函数名称: VER_WRbytes_limit
+** 函数名称: VER_WRbytes_Limit
 ** 函数描述: 带校验写若干个数据到EEPROM中
 ** 输入参数: E2起始地址EE_addr,E2设备地址FRAM_EEPROM,寄存器源地址EE_buff,所读数量N,备份正确编号firstOK
 ** 输出参数: 双备份数据
 ** 返    回：无
 ** 条    件：N<=100
 *******************************************************************************************/
-void VER_WRbytes_limit(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK)
+void VER_WRbytes_Limit(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK)
 {
     unsigned char  xdata buff[D_EEP_BUF_LEN];
     unsigned char  xdata temp[D_EEP_BUF_LEN];
@@ -418,6 +418,7 @@ void VER_WRbytes_limit(unsigned int EE_addr, unsigned char *EE_buff, unsigned ch
 	    SEQ_write_limit(ADR_temp2+i, &buff[i], 1);
     }
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
 ** 函数名称: SUM_xorb

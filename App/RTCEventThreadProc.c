@@ -735,27 +735,31 @@ void TimeTaskThread()
 		g_Flag.Clk &= ~C_SEC;
 
         //继电器相关进程
-        if(DelayFlag == 2) DelayFlag++;//执行断电一次命令
-        if(DelayFlag == 3) DelayFlag++;//执行断电一次命令
-        if(DelayFlag == 4) DelayFlag++;//执行断电一次命令
-        if(DelayFlag == 5) DelayFlag++;//执行断电一次命令
-        if(DelayFlag == 6) RealyCtrl(0);//通电
+         if(DelayFlag > 1)//响应继电器断电5s命令
+        {
+            DelayFlag++;
+						//RealyCtrl(1);//断电
+            if(DelayFlag == 6)
+            {
+                RealyCtrl(0);//通电
+            }
+        }
         //判断安装模块
         if(g_Tran.AutoReportCount != 0)
         {
             //判断安装的模块
             if((NB_LORA[0] == 0x00)&&(NB_LORA[1] == 0x00))
             {
-                 g_Tran.AutoReportCount --;
-                 if( g_Tran.AutoReportCount == 1)
-                 {
+                g_Tran.AutoReportCount --;
+                if( g_Tran.AutoReportCount == 1)
+                {
                     NB_LORA_PANDUAN(&NB_LORA[0]);
                     VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
-//									  if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
-//												 NB_Error();
+ //                 if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
+ //                     NB_Error();
                     g_Tran.AutoReportCount = 1;//1分钟后 发送上电握手信号
-                 }
-            }
+                }
+			}
 
         }
 
@@ -772,6 +776,7 @@ void TimeTaskThread()
                 g_NB.ReInitTime --;
                 if((g_NB.ReInitTime  == 0x00)&&(g_Flag.ALARM[0] == 0x00)&&(g_Flag.ALARM[0] == 0x00))//超过初始化时间，重新进行初始化
                     NB_Init();
+
             }
          }
 
@@ -795,7 +800,7 @@ void TimeTaskThread()
     {
         g_Flag.Clk &= ~C_MIN;
 
-        //自动上报进程
+				//自动上报进程
         if(g_Tran.AutoReportCount != 0)
         {
 
@@ -805,13 +810,13 @@ void TimeTaskThread()
                 if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))
                 {
                      //检查NB模块硬件状态
-                    NB_LORA_PANDUAN(&NB_LORA[0]);
+                     // NB_LORA_PANDUAN(&NB_LORA[0]);
                     if(g_NB.InitStep != 0x00) //重新进行初始化
                     {
                         g_NB.InitStep = 1;
                         g_NB.ReInitTime = 2;
                     }
-                    NB_Error();
+
                      g_Tran.AutoReportCount --;
                 }
             }
@@ -825,7 +830,7 @@ void TimeTaskThread()
         }
 
         //检查模块安装状态
-//       NB_LORA_PANDUAN(&NB_LORA[0]);
+    //       NB_LORA_PANDUAN(&NB_LORA[0]);
 //	    SEQ_write(EE_NB_LORA, &NB_LORA[0], 2);
 				//VER_RDbytes(EE_NB_LORA, &NB_LORA[0], 2);
         //继电器状态
@@ -843,7 +848,7 @@ void TimeTaskThread()
 
         VER_RDbytes(EE_Meter_address, &param_data.meter_address[0], 6);//通讯地址
         EE_to_RAM(EE_Meter_Factory, &param_data.meter_factory[0],1);   //厂商代码
-        VER_RDbytes(EE_KWH0 , &kwh_value.integer[0], 5);         //有功正向
+        VER_RDbytes((unsigned int)EE_KHH_address , &kwh_value.integer[0], 5);         //有功正向
 
         KWH_RKWH_dot();                            //小数位校验
         ECRunKwh();                                //60秒刷新组合有功
@@ -866,13 +871,18 @@ void TimeTaskThread()
     if(g_Flag.Clk & C_HOUR)
     {
         g_Flag.Clk &= ~C_HOUR;
+        if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
+        {
+         if((g_NB.InitState[0] == NB_Init_OK)&&(g_NB.InitState[1] == NB_Init_OK))
+            NB_Error();
+        }
 
 //        AP_Bill(NorBill);							//电量结算
 
         EMU_Check();								//检查EMU中校表参数是否与EEPROM中相符
-        VER_CHK(EE_KWH0, 5);                		//查有功正向电量备份
+        VER_CHK((unsigned int)EE_KHH_address, 5);
         VER_CHK(EE_Meter_address,6);                //检查通信地址备份
-        // VER_CHK(EE_RKWH0, 3);               		//查有功反向电量备份
+                // VER_CHK(EE_RKWH0, 3);               		//查有功反向电量备份
 
         // VER_CHK(EE_QKWH0, 3);                		//查无功正向电量备份
         // VER_CHK(EE_RQKWH0, 3);               		//查无功反向电量备份
