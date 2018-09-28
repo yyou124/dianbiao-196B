@@ -41,7 +41,8 @@ const DISPSETTINGTABLE code DispSettingTable[]=
 	0x9010,     &g_InsBCD.Voltage[0],       DIS_V,            	MEMTYPE_RAM|3,		//当前电压
 	0x9080,     &g_InsBCD.Current[0],       DIS_I,           	MEMTYPE_RAM|3,		//当前电流
 	0x9070,     &g_InsBCD.Power[0],       	DIS_P,          	MEMTYPE_RAM|4,		//当前有功功率
-	0x9090,     &KWH_PN[0],               	DIS_kWh,        	MEMTYPE_RAM|4,		//有功电量
+	0x9090,     &g_InsBCD.Power1[0],       	DIS_kWh,          	MEMTYPE_RAM|4,		//当前有功功率
+	//0x9090,     &KWH_PN[0],               	DIS_kWh,        	MEMTYPE_RAM|4,		//有功电量
 	0xE001,		&g_Flag.ALARM[0],			DIS_ERROR,			MEMTYPE_RAM|2		//错误警告
 /*
 	0xC420,     &g_InsBCD.Power[0],         DIS_kW,             MEMTYPE_RAM|3,		//有功功率
@@ -349,10 +350,14 @@ void DisplayProc(void)
 //g_InsBCD.Current[1] = 0x09;
 //g_InsBCD.Current[0] = 0x00;
 ////7654.32 W
-//g_InsBCD.Power[3] = 0x32;
-//g_InsBCD.Power[2] = 0x54;
-//g_InsBCD.Power[1] = 0x76;
-//g_InsBCD.Power[0] = 0x00;
+// g_InsBCD.Power[3] = 0x32;
+// g_InsBCD.Power[2] = 0x54;
+// g_InsBCD.Power[1] = 0x76;
+// g_InsBCD.Power[0] = 0x00;
+// g_InsBCD.Power1[3] = 0x66;
+// g_InsBCD.Power1[2] = 0x66;
+// g_InsBCD.Power1[1] = 0x66;
+// g_InsBCD.Power1[0] = 0x00;
 ////0.43Kwh
 //KWH_PN[0] = 0x43;
 //KWH_PN[1] = 0x00;
@@ -656,12 +661,12 @@ void DisplayProc(void)
 
 		case DIS_kWh://电量显示之前是5字节输入
 
+
 			memcpy(&Buf[0],(unsigned char xdata *)Addr,Len);
+		 	BCDshiftRight(&DisData[0],&Buf[0],4);//右移一位
+			memcpy(&Buf[0],&DisData[0],4);
+
 			ReverseCpy(&DisData[0],&Buf[0],4);
-		 	BCDshiftRight(&Buf[0],&DisData[0],4);//右移一位
-			ReverseCpy(&DisData[0],&Buf[0],4);
-			// memcpy(&Buf[0],&DisData[0],4);
-			// ReverseCpy(&DisData[0],&Buf[0],4);
 			DspNum(&ShowLCDBuf[D_LCD_SHOW_PLACE_1], &DisData[0], D_LCD_SHOW_BCD, 3);			 //4+2
 			weishu  = BCDweishu(&DisData[0],3);	//判断位数
 			//将超过位数的显示部分清零，小数点前一位保留
@@ -670,8 +675,8 @@ void DisplayProc(void)
 				if(i>3) ShowLCDBuf[i] = 0x00;
 			}
 			ShowLCDBuf[1] |= SEG_P1;	//小数点
+			ShowLCDBuf[7] |= SEG_P;		//单位
 			ShowLCDBuf[5] |= SEG_KWH;		//单位
-			//Display_HighZeroEn(&ShowLCDBuf[0], 5);
 			break;
 
 		case DIS_ERROR:

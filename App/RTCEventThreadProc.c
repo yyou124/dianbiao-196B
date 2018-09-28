@@ -754,6 +754,7 @@ void TimeTaskThread()
                 if( g_Tran.AutoReportCount == 1)
                 {
                     NB_LORA_PANDUAN(&NB_LORA[0]);
+									NB_Error();
                     VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
 //					if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
 //						NB_Error();

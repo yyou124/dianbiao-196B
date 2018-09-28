@@ -211,6 +211,7 @@ typedef struct
     unsigned char Voltage[3];
 	unsigned char Current[3];
     unsigned char Power[4];
+    unsigned char Power1[4];
     unsigned char RPower[4];
     unsigned char Frequence[2];
     unsigned char APower[4];
@@ -295,6 +296,7 @@ MEASUREPROC_EXT unsigned long xdata curn;				//零线电流
 MEASUREPROC_EXT float xdata curn_temp;
 //MEASUREPROC_EXT unsigned long xdata powerl;		    //火线有功功率
 MEASUREPROC_EXT unsigned long xdata powern;		    	//零线有功功率
+MEASUREPROC_EXT unsigned long xdata powern1;		    	//零线有功功率
 //MEASUREPROC_EXT unsigned long xdata rpowerl;			//火线无功功率
 MEASUREPROC_EXT unsigned long xdata rpowern;		    //零线无功功率
 MEASUREPROC_EXT unsigned long xdata freq;		        //电压频率
@@ -352,7 +354,7 @@ MEASUREPROC_EXT void check_dotKWHD(void);  			 	//check 正向有功小数部分,已修改
 MEASUREPROC_EXT void KWH_RKWH_dot(void);			 	//check 正向，反向有功小数部分，已修改，去掉了反向部分
 MEASUREPROC_EXT void ECRunKwh (void);                	//计算组合有功
 MEASUREPROC_EXT void ReadMeterFromTOEeprom(void);
-MEASUREPROC_EXT void ReadAutoRepotrTime(void);
+
 MEASUREPROC_EXT void check_dotQKWHD(void);  		 	//check 正向无功小数部分
 //MEASUREPROC_EXT void check_dotRQKWHD(void); 		 	//check 反向无功小数部分
 MEASUREPROC_EXT void QKWH_RQKWH_dot(void);			 	//check 正向，反向无功小数部分

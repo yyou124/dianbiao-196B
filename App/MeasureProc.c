@@ -643,39 +643,6 @@ void ConstPara_Init(unsigned char meter_const, unsigned char Cmd)
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
-** 函数名称: ReadAutoRepotrTime
-** 函数描述: 加载自动上报时间
-** 输入参数: 无
-** 输出参数: 无
-*******************************************************************************************/
-void ReadAutoRepotrTime(void)
-{
-	unsigned char temp[4];
-	//test
-//	temp[0] = 0x00;
-//	temp[1] = 0x30;
-//	temp[2] = 0x00;
-//	temp[3] = 0x05;
-//	VER_WRbytes(EE_Commu_Time, &temp[0],4, 1);
-
-	VER_RDbytes(EE_Commu_Time, &temp[0], 4);
-	//表号不是BCD码，恢复默认
-	if(!BCDCheck(&temp[0], 4))
-	{
-		g_Commu.AutoReportTimeSet = NB_AUTO_REPORT_TIME;//自动上报时间
-		g_Commu.AutoReportTimeSetAck = NB_AUTO_REPORT_ACk;//ACK相应时间
-		Word_BCD2(&temp[0],g_Commu.AutoReportTimeSet);
-		Word_BCD2(&temp[2],g_Commu.AutoReportTimeSetAck);
-		VER_WRbytes(EE_Commu_Time, &temp[0],4, 1);
-	}
-	else
-	{
-		g_Commu.AutoReportTimeSet = BCD2toINT(&temp[0]);//自动上报时间
-		g_Commu.AutoReportTimeSetAck = BCD2toINT(&temp[2]);//ACK相应时间
-	}
-}
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
 ** 函数名称: ConstPara_Chk
 ** 函数描述: 初始化RAM
 ** 输入参数: 无
@@ -741,8 +708,6 @@ void Init_RAM(void)
 	VER_RDbytes((unsigned int)EE_KHH_address, &kwh_value.integer[0], 5);
 	//计算组合有功：将整数部分与小数点部分组合到一起
 	ECRunKwh();                                     //计算组合有功
-	//加载自动上报时间，ACK响应时间
-	ReadAutoRepotrTime();
 	//读取表号
 	//EE_to_RAM(EE_Meter_address, &param_data.meter_address[0], 6);
 	VER_RDbytes(EE_Meter_address, &param_data.meter_address[0], 6);
@@ -756,7 +721,33 @@ void Init_RAM(void)
 	MemInitSet(&param_data.meter_address_def[0],0x99, 6);
 	//读取厂商代码
 	EE_to_RAM(EE_Meter_Factory, &param_data.meter_factory[0],1);
-	//gbFgKeyProg = 0xF001，启动校表程序
+	//厂商代码不是BCD码，恢复默认
+//	if(!BCDCheck(&param_data.meter_factory[0], 1))
+//	{
+//		MemInitSet(&param_data.meter_factory[0],0x00, 1);
+//		SEQ_write(EE_Meter_Factory, &param_data.meter_factory[0], 1);
+//	}
+    //检查EEPROM中冷起动次数是否正确，若错误则恢复为0，暂时不需要
+    // if (0 == VER_RDbytes(CNT_RST, &temp[0], 1))
+    // {
+    //     temp[0] = 0x00;
+    //     VER_WRbytes(CNT_RST, &temp[0], 1, 1);
+    // }
+
+    //检查EEPROM中读取结算时间数据是否正确，若错误则恢复默认
+	//结算时间？自动抄表日期？？
+/*
+	if (0==VER_RDbytes(EE_SAM_ENDDATE,&temp[0],2))
+	{
+        temp[0]=0x01;
+        temp[1]=0x00;
+        VER_WRbytes(EE_SAM_ENDDATE,&temp[0],2,1);
+	}
+*/
+
+    //检查EEPROM中首次上电标志，首次上电自动进入工厂模式,启动校表程序
+	//如果EEPROM中的EE_FirstProg_FLAG第一次上电标志不为0xA5(4byte)
+//	//则gbFgKeyProg = 0xF001，启动校表程序
 // MemInitSet(&g_Buffer[0], 0x00, 4);
 // VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
 	EE_to_RAM(EE_FirstProg_FLAG, &g_Buffer[0], 4);
@@ -774,8 +765,13 @@ void Init_RAM(void)
 		SEQ_write(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);//启动校表程序Flag
 	}
 	EE_to_RAM(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);
+
     //检查EEPROM时钟修正参数，校验正确则修正，否则跳过
 	Init_RTCAdjustProc();//不使用RTC时钟补偿
+
+	//CurChExDly = C_DefaultCurExTT;                                          //Init I1&I2 exchange value
+	//BlinkFlg = 0;                                                           //LCD fresh in factory mode enable flag
+    //gbbattery=0;                                                            //Battery error flag
 
 	gbPCNTCount=0; //潜动时间标志置0                                                          //Start & Creep timer
 	MemInitSet((unsigned char xdata *)&g_FilterV.Buf[0], 0x00, sizeof(g_FilterV));		//Filter Buffer
@@ -788,6 +784,8 @@ void Init_RAM(void)
 	MemInitSet(&NB_LORA[0],0x00,2);
 	VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
 	//继电器相关初始化
+	//DelayStatus[0] = 0x11;
+	//DelayStatus[1] = 0x11;
 	VER_RDbytes(RELAY_STATUS, &DelayStatus[0], 2);
 	if(gbFgKeyProg == 0x0000)//当前在非工厂模式，可以操作继电器
 	{
@@ -800,6 +798,7 @@ void Init_RAM(void)
 			DelayFlag = 0;//继电器通电
 		}
 	}
+
 	//协议相关
 	g_Tran.PwoerOn = 1; //上电握手
 	//g_Tran.
@@ -830,11 +829,20 @@ void Init_RAM(void)
 	gBAdjKeyEnable = 0x00;
 	gBAdjKeyEnable1 = 0x00;
 
+	// gBAdjKeyNew = 0;
+	// gBAdjKeyOld = 0;
 	gBAdjKeyStatus = 0;						//校表跳线断开退出
 	gbUartAdjust = 0;	//UART通讯校表启动标志
 	ADJ_ID = 0;		//Uart校表步骤输入指示
 	Sign_Bit = 0;	//Uart误差符号位
 	Adj_Error = 0; //Uart误差XX.XX%
+
+
+	//gBClsKeyCount = 0;
+	//gBClsKeyEnable = 0x00;
+	//gBClsKeyEnable1 = 0x00;
+	//g_Cal.ClsKeyStep = 0;					//清一次有效标志
+	//gbFgClsKeyProg = 0x0000;
 
 	AverPower = 0;
 	AdjTempValueEverySec = 0;
