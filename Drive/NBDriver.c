@@ -56,34 +56,34 @@ void ReverseCpy(unsigned char xdata * Dst,unsigned char xdata * Src,unsigned cha
 *******************************************************************************************/
 void NBdata_SendString(unsigned char *TXStr,unsigned char len, char *fasong)
 {
-    //AT指令结构：AT+QLWULDATAEX=<length>,<data>,<mode>
+    //AT指令结构：AT+M2MCLISEND==<data>
     //char fasong[127];
 	//char temp[MAX_UART_DATA_LEN];
     unsigned char changdu;
     //建立  AT指令
-    sprintf(&fasong[0],NB_SEND_DATA_LWM2M_RAI);
-    changdu = strlen(NB_SEND_DATA_LWM2M_RAI);
+    sprintf(&fasong[0],NB_SEND_DATA_LWM2M_MTK);
+    changdu = strlen(NB_SEND_DATA_LWM2M_MTK);
     //建立  <length>
-    if(len/10)
-    {
-        fasong[changdu] = (len / 10) + 0x30;
-        changdu++;
-    }
-    if (len%10)
-    {
-        fasong[changdu] = (len % 10) + 0x30;
-        changdu++;
-    }
-    //建立  ,
-    sprintf(&fasong[changdu],",");
-    changdu++;
+    // if(len/10)
+    // {
+    //     fasong[changdu] = (len / 10) + 0x30;
+    //     changdu++;
+    // }
+    // if (len%10)
+    // {
+    //     fasong[changdu] = (len % 10) + 0x30;
+    //     changdu++;
+    // }
+    // //建立  ,
+    // sprintf(&fasong[changdu],",");
+    // changdu++;
     //建立  <data>
 	HexGroupToString(&fasong[changdu],TXStr,len);
 	changdu +=len*2;
 
-    //建立  ,<mode>
-    sprintf(&fasong[changdu],",0x0100\r\n");
-    changdu += 9;
+    //建立  、换行回车
+    sprintf(&fasong[changdu],"\r\n");
+    changdu += 2;
     //发送
 	//UART0_SendString((unsigned char*)fasong,strlen(fasong));
 	// Delay_ms(10);//Test
@@ -105,6 +105,7 @@ unsigned char ATcmd_Transmit(unsigned char *AT_str, char *Repl_str, unsigned int
 	Repl_strlen = strlen(Repl_str)-1;//获取期待返回值长度
 
 	Rx_len = 0;
+	Repl_len= 0;
     //通过UART0发送AT指令
 	UART0_SendString((unsigned char*)AT_str,strlen(AT_str));
 
@@ -163,6 +164,7 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 	char fasong[200];
 	Repl_strlen = strlen(Repl_str)-1;//获取期待返回值长度
 	Rx_len = 0;
+	Repl_len= 0;
 	NBdata_SendString((unsigned char*)TX_str,TX_len,fasong);
 	len = strlen(fasong);
 	//UART的缓冲BUFFER只有64byte，需要对发送字符串进行分割
@@ -212,14 +214,16 @@ unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *R
 ** 输入参数: *AT_str 发送命令	*Repl_str期待返回值		*Get_str返回的状态	   Wait_ms等待时间
 ** 输出参数: 1发送失败 0发送成功
 *******************************************************************************************/
-unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str, char *Get_str, unsigned int Wait_ms)
+unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str,unsigned char *Get_str, unsigned int Wait_ms)
 {	unsigned char Rx_len;
 	unsigned char Repl_len;
 	unsigned char Repl_strlen;
-	char *p;
+	unsigned char i;
+	//unsigned char temp[10];
 
 	Repl_strlen = strlen(Repl_str)-1;//获取期待返回值长度
 	Rx_len = 0;
+	Repl_len= 0;
     //通过UART0发送AT指令
 	UART0_SendString((unsigned char*)AT_str,strlen(AT_str));
 	Delay_ms(300);//等待返回
@@ -227,16 +231,21 @@ unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str, char *Get_s
 	NBCount10ms = 0;//NB模块超时处理
 	RSTSTAT &= Bin(11111000);//清看门狗
 	while(Wait_ms>(NBCount10ms*10))
+		//while(1)
 	{
 		if(g_NB.UARTReceiveOK)//接收完成标志
 		{
-			while(UartRxBuf[Rx_len] == Repl_str[Repl_len]&&(Wait_ms>(NBCount10ms*10)))//对比一个字符
+			while(UartRxBuf[Rx_len] == Repl_str[Repl_len])//对比一个字符
 			{
 				if(Repl_len == Repl_strlen)//所有期待值都符合
 				{
-					p = strtok((char *)Repl_str, ":");//分离收到的字符串
-					p = strtok(NULL, ":");//取后半段
-					strcpy(Get_str,p);
+					//":"后面有空格，加一位
+					for(i=0;i<gBUartLen-Rx_len-2;i++)
+						Get_str[i] = UartRxBuf[i+Rx_len+2];
+					//字符串函数能否在单片机中使用？
+					// p = strtok((char *)UartRxBuf, " ");//分离收到的字符串
+					// p = strtok(NULL, ":");//取后半段
+					// strcpy(Get_str,p);
 					NBCount10ms = 0;
 					//UART1_SendString((unsigned char*)UartRxBuf,strlen(UartRxBuf));//test
 					g_NB.InitCount = 0;//重置计数器
@@ -298,6 +307,9 @@ void NB_Init(void)
 {
 
 	char p[32];
+	unsigned char recivedata[64];
+	char imei[16];
+
 	char *dest = p;
 
 	if(g_NB.ReInitTime||!g_NB.InitStep)//没有到初始化时间，或者初始化结束
@@ -312,8 +324,8 @@ void NB_Init(void)
 			g_NB.InitStep = 1;
 			g_NB.ReInitTime = NB_RETRY_TIME;
 				//TEST
-g_NB.InitState[0] = NB_Init_OK;
-g_NB.InitState[1] = NB_Init_OK;
+// g_NB.InitState[0] = NB_Init_OK;
+// g_NB.InitState[1] = NB_Init_OK;
 			return;
 		}
 		switch(g_NB.InitStep)
@@ -322,30 +334,36 @@ g_NB.InitState[1] = NB_Init_OK;
 			{
 				//g_NB.InitCount ++;
 				g_NB.ReInitTime = 2;	//2秒后进行初始化
-				sprintf(dest,"AT+NBAND=%s\r\n",SERVER_BAND);		//设置频段为5，电信卡
+				sprintf(dest,"AT+CGSN=1\r\n");		//获取模块IMEI号码
+				if(!NBstate_Receive(dest,"+CGSN:",recivedata,1000))
+				{
 
+					strncpy((char *)imei, (char *)recivedata, 15);	//取得IEMI号码15位，
+					imei[15] = '\0';//加一位结束符"\0"
+					g_NB.InitStep = 2;		//进行初始化步骤4
+					break;
+				}
+				else
+					break;
+			}
+			case 2:
+			{
+				g_NB.ReInitTime = 2;	//2秒后进行初始化
+				sprintf(dest,"AT+CFUN=1\r\n");
 				if(!ATcmd_Transmit(dest,"OK",1000))
 				{
-					g_NB.InitStep = 2;		//进行初始化步骤4
+					g_NB.InitStep = 3;		//进行初始化步骤4
 					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
 					break;
 				}
 				else break;
-			}
-			case 2:
-			{
-				sprintf(dest,"AT+NRB\r\n");
-				UART0_SendString((unsigned char *)dest,8);
-				g_NB.InitStep = 3;
-				g_NB.ReInitTime = 20;
-				break;
 
 			}
 			case 3:
 			{
 				//g_NB.InitCount ++;
 				g_NB.ReInitTime = 4;	//2秒后进行初始化
-				sprintf(dest,"AT+QREGSWT=1\r\n");						//自动注册
+				sprintf(dest,"AT+SM=LOCK\r\n");		//关闭PSM模式
 
 				if(!ATcmd_Transmit(dest,"OK",1000))
 				{
@@ -360,11 +378,10 @@ g_NB.InitState[1] = NB_Init_OK;
 			{
 				//g_NB.InitCount ++;
 				g_NB.ReInitTime = 2;	//2秒后进行初始化
-				sprintf(dest,"AT+CFUN=1\r\n");						//设置为收发模式
-				//sprintf(dest,"AT+CIMI\r\n");						//查询手机号
-				if(!ATcmd_Transmit(dest,"OK",1000))
+				sprintf(dest,"AT+M2MCLINEW=%s,%s,\"%s\",90\r\n",SERVER_ADDRESS,SERVER_PORT,imei);//向IOT平台注册
+				if(!ATcmd_Transmit(dest,"OK",2000))
 				{
-					g_NB.InitStep = 5;		//进行初始化步骤5
+					g_NB.InitStep = 5;		//进行初始化步骤6
 					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
 					break;
 				}
@@ -373,27 +390,14 @@ g_NB.InitState[1] = NB_Init_OK;
 			case 5:
 			{
 				//g_NB.InitCount ++;
-				g_NB.ReInitTime = 2;	//2秒后进行初始化
-				sprintf(dest,"AT+NCDP=%s,%s\r\n",SERVER_ADDRESS,SERVER_PORT);//地址写入
-				if(!ATcmd_Transmit(dest,"OK",1000))
-				{
-					g_NB.InitStep = 6;		//进行初始化步骤6
-					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
-					break;
-				}
-				else break;
-			}
-			case 6:
-			{
-				//g_NB.InitCount ++;
 				g_NB.ReInitTime = 0;	//2秒后进行初始化
-				sprintf(dest,"AT+QLWSREGIND=0\r\n");				//注册
+				sprintf(dest,"AT+CEREG?\r\n");				//注册
 				if(!ATcmd_Transmit(dest,"OK",1000))
 				{
 					g_NB.InitStep = 0;		//初始化结束
 					//g_NB.InitCount  = 0;	//重置初始化尝试次数0
 					MemInitSet(&g_NB.InitState[0],NB_Init_OK,2);//置位NBinit FLAG
-					SEQ_write(EE_NB_STATE, &g_NB.InitState[0], 2);
+					VER_WRbytes(EE_NB_STATE, &g_NB.InitState[0], 2, 1);
 					break;
 				}
 				else break;

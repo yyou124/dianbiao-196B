@@ -750,10 +750,11 @@ void TimeTaskThread()
                  if( g_Tran.AutoReportCount == 1)
                  {
                     NB_LORA_PANDUAN(&NB_LORA[0]);
-                    SEQ_write(EE_NB_LORA, &NB_LORA[0], 2);
+                    VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
                      g_Tran.AutoReportCount = 10;
                  }
             }
+						
             //如果安装了NB模块，等待初始化结束启动上报进程
             else if((NB_LORA[0] == 0xBB)&&(NB_LORA[1] == 0xBB))
             {
@@ -811,11 +812,11 @@ void TimeTaskThread()
         //检查模块安装状态
 //       NB_LORA_PANDUAN(&NB_LORA[0]);
 //	    SEQ_write(EE_NB_LORA, &NB_LORA[0], 2);
-		EE_to_RAM(EE_NB_LORA, &NB_LORA[0], 2);
+		VER_RDbytes(EE_NB_LORA, &NB_LORA[0], 2);
         //继电器状态
-        EE_to_RAM(RELAY_STATUS, &DelayStatus[0], 2);
+        VER_RDbytes(RELAY_STATUS, &DelayStatus[0], 2);
         //NB初始化状态
-        EE_to_RAM(EE_NB_STATE, &g_NB.InitState[0], 2);
+        VER_RDbytes(EE_NB_STATE, &g_NB.InitState[0], 2);
         if((DelayStatus[0] != 0xA5)&&(DelayStatus[1] != 0xA5))
         {
             DelayFlag = 1;//继电器断电
@@ -825,9 +826,9 @@ void TimeTaskThread()
             DelayFlag = 0;//继电器通电
         }
 
-        EE_to_RAM(EE_Meter_address, &param_data.meter_address[0], 6);//通讯地址
+        VER_RDbytes(EE_Meter_address, &param_data.meter_address[0], 6);//通讯地址
         EE_to_RAM(EE_Meter_Factory, &param_data.meter_factory[0],1);   //厂商代码
-        EE_to_RAM(EE_KWH0 , &kwh_value.integer[0], 5);         //有功正向
+        VER_RDbytes(EE_KWH0 , &kwh_value.integer[0], 5);         //有功正向
 
         KWH_RKWH_dot();                            //小数位校验
         ECRunKwh();                                //60秒刷新组合有功
@@ -847,7 +848,7 @@ void TimeTaskThread()
             ConstPara_Init(meter_const, 0x00);
         }
 
-        g_Flag.ALARM[0] = 0X00;                 //报警置零
+        //g_Flag.ALARM[0] = 0X00;                 //报警置零
         gbFgShowItemNum = D_ShowItemNum;		//显示项目次数校验RAM
     }
 
@@ -858,8 +859,9 @@ void TimeTaskThread()
 
 //        AP_Bill(NorBill);							//电量结算
 
-        //EMU_Check();								//检查EMU中校表参数是否与EEPROM中相符
-        //VER_CHK(EE_KWH0, 3);                		//查有功正向电量备份
+        EMU_Check();								//检查EMU中校表参数是否与EEPROM中相符
+        VER_CHK(EE_KWH0, 5);                		//查有功正向电量备份
+        VER_CHK(EE_Meter_address,6);                //检查通信地址备份
         // VER_CHK(EE_RKWH0, 3);               		//查有功反向电量备份
 
         // VER_CHK(EE_QKWH0, 3);                		//查无功正向电量备份

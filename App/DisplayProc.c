@@ -463,7 +463,7 @@ void DisplayProc(void)
 				break;
 				}
 			}
-				if(gbAdjCurrentStep == 1)			  //1.0	  OK
+				if((gbAdjCurrentStep == 1)&(gbAdjustShowID ==	Adj5_CHB_Power_GAIN))		  //1.0	  OK
 				{
 					MemInitSet(&ShowLCDBuf[0],0x00,LCDFRAME);
 					DisData[5] = 0x18;				//O
@@ -476,8 +476,10 @@ void DisplayProc(void)
 					//AddPointUnit(&ShowLCDBuf[0], gbAdjustShowID);		    //所有小数点单元的显示处理
 					ShowLCDBuf[1] |= SEG_P1;	//小数点
 					LcdDataToICBufShow(&ShowLCDBuf[0]);
+					return;
+					
 				}
-				else if(gbAdjCurrentStep == 2)			  //0.5L
+				else if((gbAdjCurrentStep == 2)&(gbAdjustShowID ==	Adj7_CHB_Phase))			  //0.5L
 				{
 					 MemInitSet(&ShowLCDBuf[0],0x00,LCDFRAME);
 					DisData[5] = 0x18;				//O
@@ -490,8 +492,9 @@ void DisplayProc(void)
 					//AddPointUnit(&ShowLCDBuf[0], gbAdjustShowID);		    //所有小数点单元的显示处理
 					ShowLCDBuf[1] |= SEG_P1;	//小数点
 					LcdDataToICBufShow(&ShowLCDBuf[0]);
+					return;
 				}
-				else if(gbAdjCurrentStep == 3)			  //0.1
+				else if((gbAdjCurrentStep == 3) &(gbAdjustShowID ==	Adj9_CHB_Offset))			  //0.1
 				{
 					MemInitSet(&ShowLCDBuf[0],0x00,LCDFRAME);
 					DisData[5] = 0x18;				//O
@@ -504,6 +507,7 @@ void DisplayProc(void)
 					//AddPointUnit(&ShowLCDBuf[0], gbAdjustShowID);		    //所有小数点单元的显示处理
 					ShowLCDBuf[1] |= SEG_P1;	//小数点
 					LcdDataToICBufShow(&ShowLCDBuf[0]);
+					return;
 				}
 
 

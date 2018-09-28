@@ -179,7 +179,7 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 
 
 _642B_EMU_EXT void Init_EMU(void);//修改完成
-//_642B_EMU_EXT void EMU_Check(void);//EMU校准,待修改
+_642B_EMU_EXT void EMU_Check(void);//EMU校准,待修改
 _642B_EMU_EXT void ReadEMUFromTOEeprom(void);   //从EEPROM载入校表参数，待修改, 不知道有什么用
 _642B_EMU_EXT void EMUTampProc(void);//ENU运行函数，待修改
 //_642B_EMU_EXT void AdjustSub(void);

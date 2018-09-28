@@ -82,14 +82,16 @@ void PowerAdjThread(void)                					//脉冲校表线程
 			else if(g_Cal.Flag  == D_InitEnd)				    //结束校表程序
 			{
 				//校表结束，将校表参数及FLAG写入EEPROM中
-				SEQ_write(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data));
+				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);
 				//写入电量FLAG
 				MemInitSet(&kwh_value.integer[0],0x00,5);
-				SEQ_write(EE_KWH0,&kwh_value.integer[0],5);
+				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5, 1);
 				//写入校表结束标志
 				MemInitSet(&g_Buffer[0], 0xA5, 4);
-				SEQ_write(EE_FirstProg_FLAG,&g_Buffer[0],4);
-
+				VER_WRbytes(EE_FirstProg_FLAG,&g_Buffer[0],4, 1);
+				//写入继电器开启标志
+				MemInitSet(&g_Buffer[0], 0xA5, 2);
+				VER_WRbytes(RELAY_STATUS,&DelayStatus[0],2, 1);
 				gBAdjKeyCount = 0;
 				gBAdjKeyEnable = 0x00;
 				gBAdjKeyEnable1 = 0x00;
@@ -159,14 +161,6 @@ void JumpPowerAutoAdjust(void)
 
 		if(1 == JudgeVoltugeRange())//在电压范围内
 		{
-			if(!gbUartAdjust)
-			{
-				//依据功率获取校表类型
-				//1100W 功率增益
-				//550W	相位角差
-
-				ADJ_ID = GetAdjMeterTepe();
-			}
 			if(gbFgKeyProg == 0xF001)
 			{
 				switch (ADJ_ID)
@@ -273,6 +267,14 @@ void JumpPowerAutoAdjust(void)
 					break;
 				}
 		    }
+			if(!gbUartAdjust)
+			{
+				//依据功率获取校表类型
+				//1100W 功率增益
+				//550W	相位角差
+
+				ADJ_ID = GetAdjMeterTepe();
+			}
 		 }
 		 else
 		 {

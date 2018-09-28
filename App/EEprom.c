@@ -29,19 +29,14 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 
 #include "config.h"
 #include "Headconfig.h"
-/*****************************************************************************************************
- *  Function Name: UCHAR EEPromByteRead(UCHAR nAddrH,UCHAR nAddrL)
- *  Created By:    Cathy.Feng
- *  Created Date:  2016-07-16
- *  Input:         nAddrH, nAddrL
- *  Output:        None
- *  Return:        nTemp
- *  Description:   从指定地址处读取1个byte返回
- *  Modified By:
- *  Modified Date:
- *  History:
- *  Others:
- *****************************************************************************************************/
+/*******************************************************************************************
+** 函数名称: EEPromByteRead
+** 函数描述: 内部类EEPROM读取
+** 输入参数: nAddrH 待读取扇区  nAddrL 待读取扇区的地址  nData
+** 输出参数: 无
+** 返    回：读取到的数据
+** 条    件：无
+*******************************************************************************************/
 unsigned char EEPromByteRead(unsigned char EE_addrH, unsigned char EE_addrL)         // 字节读
 {
     unsigned char nTemp ;
@@ -69,20 +64,14 @@ unsigned char EEPromByteRead(unsigned char EE_addrH, unsigned char EE_addrL)    
 }
 
 
-//	一个扇区256个字节
-/*****************************************************************************************************
- *  Function Name: void EEPromByteProgram(UCHAR nAddrH,UCHAR nAddrL, UCHAR nData)
- *  Created By:    Cathy.feng
- *  Created Date:  2016-07-16
- *  Input:         Sector，nAddr nData
- *  Output:        None
- *  Return:
- *  Description:   向指定sector的指定地址处写入1个byte
- *  Modified By:
- *  Modified Date:
- *  History:
- *  Others:
- *****************************************************************************************************/
+/*******************************************************************************************
+** 函数名称: EEPromByteProgram
+** 函数描述: 内部类EEPROM写入
+** 输入参数: nAddrH 待写入扇区  nAddrL 待写入扇区的地址  nData 待写入数据
+** 输出参数: 无
+** 返    回：无
+** 条    件：无
+*******************************************************************************************/
 void EEPromByteProgram(unsigned char nAddrH,unsigned char nAddrL, unsigned char nData)  // 字节编程
 {
 
@@ -112,19 +101,14 @@ void EEPromByteProgram(unsigned char nAddrH,unsigned char nAddrL, unsigned char 
 
     EA = EA_BAK;                       //恢复EA
 }
-/*****************************************************************************************************
- *  Function Name: void EEPromSectorErase(UCHAR nAddrH)
- *  Created By:    Cathy.Feng
- *  Created Date:  2016-07-19
- *  Input:         sector number.
- *  Output:        None
- *  Return:
- *  Description:
- *  Modified By:
- *  Modified Date:
- *  History:
- *  Others:
- *****************************************************************************************************/
+/*******************************************************************************************
+** 函数名称: EEPromSectorErase
+** 函数描述: 扇区擦除
+** 输入参数: nAddrH 待擦除扇区
+** 输出参数: 无
+** 返    回：无
+** 条    件：无
+*******************************************************************************************/
 void EEPromSectorErase(unsigned char nAddrH)// 扇区擦除
 {
     Bit EA_BAK;
@@ -389,6 +373,53 @@ void VER_WRbytes(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************
+** 函数名称: VER_WRbytes_limit
+** 函数描述: 带校验写若干个数据到EEPROM中
+** 输入参数: E2起始地址EE_addr,E2设备地址FRAM_EEPROM,寄存器源地址EE_buff,所读数量N,备份正确编号firstOK
+** 输出参数: 双备份数据
+** 返    回：无
+** 条    件：N<=100
+*******************************************************************************************/
+void VER_WRbytes_limit(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK)
+{
+    unsigned char  xdata buff[D_EEP_BUF_LEN];
+    unsigned char  xdata temp[D_EEP_BUF_LEN];
+    unsigned char  xdata i;
+    unsigned int xdata ADR_temp1, ADR_temp2;
+
+
+    for (i=0; i<N; i++) buff[i]=*(EE_buff+i);
+    SUM_xorb(&buff[0], N);       							//待写数据校验和
+
+    if (firstOK!=1)             							//先第1份后第2份
+    {
+        ADR_temp1=EE_addr;
+        ADR_temp2=EE_addr+EE_BAKADDR;
+    }
+    else                        							//先第2份后第1份
+    {
+        ADR_temp2=EE_addr;
+        ADR_temp1=EE_addr+EE_BAKADDR;
+    }
+
+    EE_to_RAM(ADR_temp1, &temp[0], N+2);
+
+    for (i=0; i<N+2; i++)   								//数据不同时写
+    {
+        if (buff[i]!=temp[i])
+	    SEQ_write_limit(ADR_temp1+i, &buff[i], 1);
+    }
+
+    EE_to_RAM(ADR_temp2, &temp[0], N+2);
+
+    for (i=0; i<N+2; i++)   								//数据不同时写
+    {
+        if (buff[i]!=temp[i])
+	    SEQ_write_limit(ADR_temp2+i, &buff[i], 1);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************************
 ** 函数名称: SUM_xorb
 ** 函数描述: 计算校验和(累加和异或)
 ** 输入参数: RAM起始地址,运算数量n
@@ -486,167 +517,6 @@ void VER_CHK(unsigned int EE_addr, unsigned char N)
 
 /*------------------------中断程序专用-----------------------------------*/
 
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
-** 函数名称: VER_RDbytes_INT
-** 函数描述: 带校验从EEPROM中连续读若干个数据
-** 输入参数: E2起始地址EE_addr,E2设备地址FRAM_EEPROM,目标EE_buff地址,所读数量N
-** 输出参数: 正确的备份数据（或全错时的第2份）读到EE_buff连续地址
-** 返    回：0-两份都错\1-第1份对\2-第2份对\ff异常
-** 条    件：N<=100,第1份不对再读第二份
-*******************************************************************************************/
- unsigned char VER_RDbytes_INT(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N)
-{
-    unsigned char  xdata temp[D_EEP_BUF_LEN];
-    unsigned char  xdata i, sum, xorb;
-
-    if (!EE_to_RAM_INT(EE_addr, &temp[0], N+2)) return(0xff);
-
-    sum=temp[N];
-    xorb=temp[N+1];
-
-    SUM_xorb_INT(&temp[0],N);
-
-    if ((temp[N]==sum)&&(temp[N+1]==xorb))   							//第一份对
-    {
-        for (i=0; i<N; i++) *(EE_buff+i)=temp[i];
-        return(1);
-    }
-    else
-    {
-        if (!EE_to_RAM_INT(EE_addr+EE_BAKADDR, &temp[0], N+2)) return(0xff);
-
-        sum=temp[N];
-        xorb=temp[N+1];
-
-        for (i=0; i<N; i++) *(EE_buff+i)=temp[i];
-
-        SUM_xorb_INT(&temp[0],N);
-
-        if ((temp[N]==sum)&&(temp[N+1]==xorb))
-		{
-			return(2);				//第二份对
-		}
-        else
-		{
-			return(0);
-		}
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
-** 函数名称: VER_WRbytes
-** 函数描述: 带校验写若干个数据到EEPROM中
-** 输入参数: E2起始地址EE_addr,寄存器源地址EE_buff,所读数量N,备份正确编号firstOK
-** 输出参数: 双备份数据
-** 返    回：无
-** 条    件：N<=100
-*******************************************************************************************/
- void VER_WRbytes_INT(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N, unsigned char firstOK)
-{
-    unsigned char  xdata buff[D_EEP_BUF_LEN];
-    unsigned char  xdata temp[D_EEP_BUF_LEN];
-    unsigned char  xdata i;
-    unsigned int xdata ADR_temp1, ADR_temp2;
-
-
-    for (i=0; i<N; i++) buff[i]=*(EE_buff+i);
-    SUM_xorb_INT(&buff[0], N);       							//待写数据校验和
-
-    if (firstOK!=1)             							//先第1份后第2份
-    {
-        ADR_temp1=EE_addr;
-        ADR_temp2=EE_addr+EE_BAKADDR;
-    }
-    else                        							//先第2份后第1份
-    {
-        ADR_temp2=EE_addr;
-        ADR_temp1=EE_addr+EE_BAKADDR;
-    }
-
-    EE_to_RAM_INT(ADR_temp1, &temp[0], N+2);
-
-    for (i=0; i<N+2; i++)   								//数据不同时写
-    {
-        if (buff[i]!=temp[i])
-	    SEQ_write_INT(ADR_temp1+i, &buff[i], 1);
-    }
-
-    EE_to_RAM_INT(ADR_temp2, &temp[0], N+2);
-
-    for (i=0; i<N+2; i++)   								//数据不同时写
-    {
-        if (buff[i]!=temp[i])
-	    SEQ_write_INT(ADR_temp2+i, &buff[i], 1);
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
-** 函数名称: SUM_xorb
-** 函数描述: 计算校验和(累加和异或)
-** 输入参数: RAM起始地址,运算数量n
-** 输出参数: n+1个RAM=累加和,n+2个RAM=异或码
-** 返    回：无
-** 条    件：无
-*******************************************************************************************/
- void SUM_xorb_INT(unsigned char *RAM,unsigned char N)
-{
-	unsigned char i;
-
-	*(RAM+N)=0;
-	*(RAM+N+1)=0;
-
-	for(i=0; i<N; i++)
-    {
-        *(RAM+N)+=~(*(RAM+i));
-    	*(RAM+N+1)^=*(RAM+i);
-    }
-}
-
-
-/*****************************************************************************************************
- *  Function Name: UCHAR EEPromByteRead(UCHAR nAddrH,UCHAR nAddrL)
- *  Created By:    Cathy.Feng
- *  Created Date:  2016-07-16
- *  Input:         nAddrH, nAddrL
- *  Output:        None
- *  Return:        nTemp
- *  Description:   从指定地址处读取1个byte返回
- *  Modified By:
- *  Modified Date:
- *  History:
- *  Others:
- *****************************************************************************************************/
-unsigned char EEPromByteRead_INT(unsigned char EE_addrH, unsigned char EE_addrL)         // 字节读
-{
-    unsigned char nTemp ;
-    unsigned int  xdata adrval ;
-    unsigned char code * nAddr ;
-    Bit EA_BAK;
-
-    EA_BAK = EA;                   		//保护EA
-    EA = 0;							  	//关中断
-    //地址范围0x0000~0x07FF; 0~2047
-    FLASHCON = 1 ;
-//   nInt = nAddrH ;
-//   nInt <<= 8 ;
-//   nInt += nAddrL ;
-    adrval = EE_addrH;
-    adrval = EE_addrH*256;
-    adrval = adrval+EE_addrL;
-    nAddr = (unsigned char code *)adrval;
-
-    nTemp = *nAddr;
-
-    FLASHCON = 0 ;
-    EA = EA_BAK;                       //恢复EA
-    return (nTemp) ;
-}
-
-
-//	一个扇区256个字节
 /*****************************************************************************************************
  *  Function Name: void EEPromByteProgram(UCHAR nAddrH,UCHAR nAddrL, UCHAR nData)
  *  Created By:    Cathy.feng
@@ -687,64 +557,4 @@ void EEPromByteProgram_INT(unsigned char nAddrH,unsigned char nAddrL, unsigned c
     FLASHCON = 0 ;
 
     EA = EA_BAK;                       //恢复EA
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
-** 函数名称: SEQ_write
-** 函数描述: 从RAM连续写若干个数据至EEPROM
-** 输入参数: E2要写入的地址EE_addr,目标数据EE_buff指针,所写数量N
-** 输出参数:
-** 返    回：0-异常/1-正常
-** 条    件：
-*******************************************************************************************/
- bit SEQ_write_INT(unsigned int EE_addr, unsigned char *EE_buff, unsigned char N)
-{
-    unsigned char  i;
-    unsigned char EE_addrH;     //写入地址高字节，扇区
-    unsigned char EE_addrL;     //写入地址低字节，扇区中地址
-    bit flag=0;
-    EE_addrL = EE_addr&0xf;
-    EE_addrH = (EE_addr>>8)&0x0f;
-    if (EE_addrH > 8) return (flag); //超出扇区范围直接返回;
-    if ((EE_addrL+N) > 256) return (flag); //超出地址范围直接返回
-
-    for(i=0;i<N-1;i++)
-    {
-        EEPromByteProgram_INT(EE_addrH, EE_addrL+i, *EE_buff);
-        EE_buff++;
-    }
-	flag=1;
-
-	return(flag);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-/*******************************************************************************************
-** 函数名称: EE_to_RAM
-** 函数描述: 从EEPROM中连续读若干个数据
-** 输入参数: E2起始地址EE_addr,E2设备地址FRAM_EEPROM,目标EE_buff地址,所读数量N
-** 输出参数:
-** 返    回：0-异常/1-正常
-** 条    件：外部EEPROM的A0A1A2=0,模拟I2C串口,
-*******************************************************************************************/
- bit EE_to_RAM_INT(unsigned int EE_addr,unsigned char *EE_buff, unsigned char N)
-{
-    unsigned char i;
-    unsigned char EE_addrH;
-    unsigned char EE_addrL;
-    bit flag=0;
-    if(EE_addrH>8) return (flag);
-    if((EE_addrL+N)>256) return (flag); //超出地址直接返回
-
-    EE_addrH = (EE_addr>>8)&0xFF;
-    EE_addrL = EE_addr&0x00FF;
-    for(i=0;i<N-1;i++)
-    {
-        *EE_buff = EEPromByteRead_INT(EE_addrH, EE_addrL + i);
-        EE_buff++;
-    }
-    flag=1;
-
-	return(flag);
 }

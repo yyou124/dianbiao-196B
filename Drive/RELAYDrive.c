@@ -54,14 +54,14 @@ void RealyCtrl(unsigned char On_Offn)
 		DelayStatus[0] = 0xA5;
 		DelayStatus[1] = 0xA5;
 		//MemInitSet(&DelayStatus[0], 0xA5, 2);
-		SEQ_write(RELAY_STATUS,&DelayStatus[0],2);
+		VER_WRbytes(RELAY_STATUS,&DelayStatus[0],2, 1);
 	}
 	else if(On_Offn == 1)//นุ
 	{
 		DelayFlag = 1;
 		DELAY_INA_H();
 		DELAY_INB_L();
-		
+
 		Delay_ms(200);
 		DELAY_INA_L();
 		DELAY_INB_L();
@@ -69,14 +69,14 @@ void RealyCtrl(unsigned char On_Offn)
 		DelayStatus[0] = 0x00;
 		DelayStatus[1] = 0x00;
 		//MemInitSet(&DelayStatus[0], 0x00, 2);
-		SEQ_write(RELAY_STATUS,&DelayStatus[0],2);
+		VER_WRbytes(RELAY_STATUS,&DelayStatus[0],2, 1);
 	}
 	else if(On_Offn ==2)//นุ5s
 	{
 		DelayFlag = 2;
 		DELAY_INA_H();
 		DELAY_INB_L();
-		
+
 		Delay_ms(200);
 		DELAY_INA_L();
 		DELAY_INB_L();

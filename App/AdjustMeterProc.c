@@ -97,10 +97,9 @@ void AdjustMeterInit(void)
 				adjust_data.power2gain = 0x0000;
 				//将用电量清零
                 MemInitSet(&kwh_value.integer[0],0x00,5);
-				SEQ_write(EE_KWH0,&kwh_value.integer[0],5);
-				//不带校验想EEPROM写入校表
-				SEQ_write(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data));
-                //VER_WRbytes(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
+				VER_WRbytes(EE_KWH0,&kwh_value.integer[0],5,1);
+				//带校验向EEPROM写入校表
+				VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data), 1);
                 MemInitSet(&g_CalTmp.Buffer[0],0x00,sizeof(g_CalTmp));
                 g_Cal.Step++;
                 break;
@@ -224,9 +223,9 @@ void AdjustMeterInit(void)
                 //Enable ADC input
                 val.val= 0x00C6;
             	WriteEMU_REG(EMUCFG0, val);             //ADC输入不短接
-				//先不带校验写入，写之前先清除擦扇区
+
                 //Write all the calibration parameter into EEPROM
-                SEQ_write(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data));
+                VER_WRbytes_limit(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data),1);
 
                 //g_Cal.Key = 0x00;
                 //g_Cal.Step = 0x00;

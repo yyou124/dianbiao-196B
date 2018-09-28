@@ -635,6 +635,14 @@ void NB_LORA_PANDUAN(unsigned char *flag)
 	{
 		flag[0] = 0xAA;//判断为LORA模块
 		flag[1] = 0xAA;
+		//如果安装LORA模块 改变串口波特率
+		 SBRTH &= (~0x80);//停止串口波特率发生2
+		 SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
+		 SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
+
+		 SFINE &= Bin(11110000);
+		 SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+		 SBRTH |= 0x80;                          	//串口0波特率发生器使能
 	}
 	else				//判断为NB模块
 	{
@@ -651,7 +659,7 @@ void NB_LORA_PANDUAN(unsigned char *flag)
 *******************************************************************************************/
 void Init_RAM(void)
 {
-	uint8 temp[6];
+	//uint8 temp[6];
     //Note:
     //ReadEMUFromTOEeprom()需要在ConstPara_Init()之后，ConstPara_Init()不能写adjust_data，否则导致导致ReadEMUFromTOEeprom()的检查不起作用；
     //check_dot&check_dotRKWHD函数必须在ConstPara_Init（）之后，只有在g_ConstPara.Threshold正确后才能保证脉冲、小数电量初始化正常;
@@ -659,22 +667,22 @@ void Init_RAM(void)
 	//加载脉冲常数，ICONT寄存器数值
     ConstPara_Init(meter_const, 0xA5);
 	//校验校表参数正确与否，不正确恢复默认值
-	//这里采用不带校验和备份的方式读出
     ReadEMUFromTOEeprom();
     //从EEPROM中读取有功电能：脉冲数，小数点数据
 	ReadMeterFromTOEeprom();
     //从EEPROM中读取有功电能：整数部分，5字节
-	EE_to_RAM(EE_KWH0, &kwh_value.integer[0], 5);               //有功
-	temp[0] = kwh_value.integer[0];
+	//EE_to_RAM(EE_KWH0, &kwh_value.integer[0], 5);               //有功
+	VER_RDbytes(EE_KWH0, &kwh_value.integer[0], 5);
 	//计算组合有功：将整数部分与小数点部分组合到一起
 	ECRunKwh();                                     //计算组合有功
 	//读取表号
-	EE_to_RAM(EE_Meter_address, &param_data.meter_address[0], 6);
+	//EE_to_RAM(EE_Meter_address, &param_data.meter_address[0], 6);
+	VER_RDbytes(EE_Meter_address, &param_data.meter_address[0], 6);
 	//表号不是BCD码，恢复默认
 	if(!BCDCheck(&param_data.meter_address[0], 6))
 	{
 		MemInitSet(&param_data.meter_address[0],0x00, 6);
-		SEQ_write(EE_Meter_address, &param_data.meter_address[0], 6);
+		VER_WRbytes(EE_Meter_address, &param_data.meter_address[0], 6, 1);
 	}
 	//加载默认表号
 	MemInitSet(&param_data.meter_address_def[0],0x99, 6);
@@ -711,17 +719,17 @@ void Init_RAM(void)
     if ((g_Buffer[0] != 0xA5) && (g_Buffer[1] != 0xA5) && (g_Buffer[2] != 0xA5) && (g_Buffer[3] != 0xA5))
     {
 		gbFgKeyProg = 0xF001;
-		SEQ_write(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);//启动校表程序Flag
+		VER_WRbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2, 1);//启动校表程序Flag
 		//此处在校表程序结束后，置FLGA
         //MemInitSet(&g_Buffer[0], 0xA5, 4);
        //SEQ_write(EE_FirstProg_FLAG, &g_Buffer[0], 4);
     }
 	else
 	{
-		gbFgKeyProg = 0xF001;
-//		gbFgKeyProg = 0x0000;
+		gbFgKeyProg = 0x0000;
+		VER_WRbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2, 1);//启动校表程序Flag
 	}
-	//VER_RDbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);
+	VER_RDbytes(EE_PROG_FLAG, (uint8*)&gbFgKeyProg, 2);
 
     //检查EEPROM时钟修正参数，校验正确则修正，否则跳过
 	Init_RTCAdjustProc();//不使用RTC时钟补偿
@@ -739,19 +747,23 @@ void Init_RAM(void)
 	//安装的模块FLAG初始化
 	//NB_LORA_PANDUAN(&NB_LORA[0]);
 	MemInitSet(&NB_LORA[0],0x00,2);
-	SEQ_write(EE_NB_LORA, &NB_LORA[0], 2);
+	VER_WRbytes(EE_NB_LORA, &NB_LORA[0], 2, 1);
 	//继电器相关初始化
 	//DelayStatus[0] = 0x11;
 	//DelayStatus[1] = 0x11;
-	EE_to_RAM(RELAY_STATUS, &DelayStatus[0], 2);
-	if((DelayStatus[0] != 0xA5)&&(DelayStatus[1] != 0xA5))
+	VER_RDbytes(RELAY_STATUS, &DelayStatus[0], 2);
+	if(gbFgKeyProg == 0x0000)//当前在非工厂模式，可以操作继电器
 	{
-		DelayFlag = 1;//继电器断电
+		if((DelayStatus[0] != 0xA5)&&(DelayStatus[1] != 0xA5))
+		{
+			DelayFlag = 1;//继电器断电
+		}
+		else
+		{
+			DelayFlag = 0;//继电器通电
+		}
 	}
-	else
-	{
-		DelayFlag = 0;//继电器通电
-	}
+
 	//协议相关
 	g_Tran.PwoerOn = 1; //上电握手
 	g_Tran.AutoReportTime = 0;	//自动上报尝试次数
@@ -765,7 +777,7 @@ void Init_RAM(void)
 	g_NB.ReInitTime = 1;		//初始化，间隔时间
 	g_NB.InitStep = 1;			//初始化，从第一步开始
 	MemInitSet(&g_NB.InitState[0],NB_Init_NOT_OK,2);
-	SEQ_write(EE_NB_STATE, &g_NB.InitState[0], 2);
+	VER_WRbytes(EE_NB_STATE, &g_NB.InitState[0], 2, 1);
 
 	//显示相关初始化
 	g_Flag.ALARM[0] = 0X00; //报警置零
@@ -1019,7 +1031,7 @@ void E_operating(unsigned int EE_addr ,unsigned char *IRAM, unsigned char *DRAM,
 		Add1BCD(IRAM, 6);      					//整数电量累加
 		_nop_();
 		//将刷新后的电量存入EEPROM中
-		SEQ_write(EE_addr, IRAM, len);
+		VER_WRbytes(EE_addr, IRAM, len, 1);
 		//VER_WRbytes(EE_addr, IRAM, len, r);
 		ECRunKwh();            					//刷新组合有功
 	}

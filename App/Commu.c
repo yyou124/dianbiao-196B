@@ -489,7 +489,7 @@ unsigned char Commu_Recive_Process(unsigned char *DataRecieve, unsigned char *Da
 			memcpy(&KWH_PN[0],&DataRecieve[11],6);//µÁ¡ø
 			KWHD = DataRecieve[11];
 			memcpy(&kwh_value.integer[0],&DataRecieve[12],5);
-			SEQ_write(EE_KWH0, &kwh_value.integer[0], 5);
+			VER_WRbytes(EE_KWH0, &kwh_value.integer[0], 5, 1);
 			len_trasmit = ProtocolBuild(NB_PROTOCOL_kWh_rst, DataBuild);
 			break;
 		}

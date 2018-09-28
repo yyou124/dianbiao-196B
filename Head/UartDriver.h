@@ -49,7 +49,8 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define     UART_BAUDRATE_2400           (32768-FSYSCLK/16/2400)
 #define     UART_BAUDRATE_4800           (32768-FSYSCLK/16/4800)
 #define     UART_BAUDRATE_9600           (32768-FSYSCLK/16/9600)
-#define     UART_BAUDRATE_19200           (32768-FSYSCLK/16/19200)
+#define     UART_BAUDRATE_19200          (32768-FSYSCLK/16/19200)
+#define     UART_BAUDRATE_115200         (32768-FSYSCLK/16/115200)
 
 #define     UART_BFINE_300               ((FSYSCLK/300) - 16*(32768 - UART_BAUDRATE_300))   //手算为7，需验证
 #define     UART_BFINE_600               ((FSYSCLK/600) - 16*(32768 - UART_BAUDRATE_600))
@@ -57,7 +58,8 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define     UART_BFINE_2400              ((FSYSCLK/2400) - 16*(32768 - UART_BAUDRATE_2400))
 #define     UART_BFINE_4800              ((FSYSCLK/4800) - 16*(32768 - UART_BAUDRATE_4800))
 #define     UART_BFINE_9600              ((FSYSCLK/9600) - 16*(32768 - UART_BAUDRATE_9600))
-#define     UART_BFINE_19200              ((FSYSCLK/19200) - 16*(32768 - UART_BAUDRATE_19200))
+#define     UART_BFINE_19200             ((FSYSCLK/19200) - 16*(32768 - UART_BAUDRATE_19200))
+#define     UART_BFINE_115200            ((FSYSCLK/115200) - 16*(32768 - UART_BAUDRATE_19200))
 
 #define     UART0_BAUDRATE               UART_BAUDRATE_2400		    //UART波特率2400bps
 #define     UART1_BAUDRATE               UART_BAUDRATE_2400		    //UART波特率2400bps

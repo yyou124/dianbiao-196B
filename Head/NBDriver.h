@@ -24,7 +24,7 @@ Rev#  CheckSum    Date     Author     Comments(Function+Date)
 #define		NB_Init_OK				0xA5
 #define     NB_Init_NOT_OK			0x00
 
-
+#define	    NB_SEND_DATA_LWM2M_MTK	"AT+M2MCLISEND="	//MTK2526通过LWM2M协议发送数据
 #define     NB_SEND_DATA_LWM2M      "AT+QLWULDATAEX="	//通过LWM2M协议发送数据
 #define     NB_SEND_DATA_LWM2M_RAI	"AT+QLWULDATAEX="	//通过LWM2M协议发送带有RAI标识的数据
 #define		SERVER_BAND				"8"					//配置NB模块频段	5，电信 8，移动、联通
@@ -76,7 +76,7 @@ extern void ReverseCpy(unsigned char xdata * Dst,unsigned char xdata * Src,unsig
 extern void 		 NBdata_SendString(unsigned char *TXStr,unsigned char len, char *fasong);
 extern unsigned char ATcmd_Transmit(unsigned char *AT_str,char *Repl_str,unsigned int Wait_ms);
 extern unsigned char NBdata_Transmit(unsigned char *TX_str,unsigned char TX_len,char *Repl_str,unsigned int Wait_ms);
-extern unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str, char *Get_str, unsigned int Wait_ms);
+extern unsigned char NBstate_Receive(unsigned char *AT_str, char *Repl_str, unsigned char *Get_str, unsigned int Wait_ms);
 extern unsigned char NBdata_Receive(unsigned char *Repl_str, unsigned char *Get_str, unsigned char *len);
 
 

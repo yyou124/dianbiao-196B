@@ -307,8 +307,8 @@ void Init_EMU(void)
 *******************************************************************************************/
 void ReadEMUFromTOEeprom(void)
 {
-    if(EE_to_RAM(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data))==0)
-    //if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data))==0)
+    //if(EE_to_RAM(ADJ_ADDR,&adjust_data.gain,sizeof(adjust_data))==0)
+    if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data))==0)
     {
         //最大电流为60A，脉冲常数为1200，因此将脉冲宽度调整为45ms/90 待定
         adjust_data.gain = 0x43;    //不知道有什么用....
@@ -400,18 +400,18 @@ void ReadEMUFromTOEeprom(void)
 ** 入口参数: 无
 ** 出口参数: 无
 *******************************************************************************************/
-//void EMU_Check(void)
-//{
-//	__U32_Def xdata val;
+void EMU_Check(void)
+{
+	__U32_Def xdata val;
 
-//	if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data)) != 0)
-//	{
-//		val = ReadEMU_REG(ICONT);
-//		if(val.val != adjust_data.icont)
-//		{
-//			val.val = adjust_data.icont;
-//			WriteEMU_REG(ICONT,val);                 //脉冲常数计算对应值
-//		}
+	if(VER_RDbytes(ADJ_ADDR, &adjust_data.gain, sizeof(adjust_data)) != 0)
+	{
+		val = ReadEMU_REG(ICONT);
+		if(val.val != adjust_data.icont)
+		{
+			val.val = adjust_data.icont;
+			WriteEMU_REG(ICONT,val);                 //脉冲常数计算对应值
+		}
 
 //        val = ReadEMU_REG(ADCOSU);
 //		if(val.val != adjust_data.adcos)
@@ -419,26 +419,26 @@ void ReadEMUFromTOEeprom(void)
 //			val.val = adjust_data.adcos;
 //			WriteEMU_REG(ADCOSU,val);                //ADC偏置
 //		}
-//		val = ReadEMU_REG(W2GAIN);
-//		if(val.val != adjust_data.w2gain)
-//		{
-//			val.val = adjust_data.w2gain;
-//			WriteEMU_REG(W2GAIN,val);                  //通道2的功率修正
-//		}
+		val = ReadEMU_REG(W2GAIN);
+		if(val.val != adjust_data.w2gain)
+		{
+			val.val = adjust_data.w2gain;
+			WriteEMU_REG(W2GAIN,val);                  //通道2的功率修正
+		}
 
-//		val = ReadEMU_REG(P2CAL);
-//		if(val.val != adjust_data.p2cal)
-//		{
-//			val.val = adjust_data.p2cal;
-//			WriteEMU_REG(P2CAL,val);                  //通道2的相位修正
-//		}
+		val = ReadEMU_REG(P2CAL);
+		if(val.val != adjust_data.p2cal)
+		{
+			val.val = adjust_data.p2cal;
+			WriteEMU_REG(P2CAL,val);                  //通道2的相位修正
+		}
 
-//		val = ReadEMU_REG(WATT2OS);
-//		if(val.val != adjust_data.w2os)
-//		{
-//			val.val = adjust_data.w2os;
-//			WriteEMU_REG(WATT2OS,val);                 //通道2的5%
-//		}
+		val = ReadEMU_REG(WATT2OS);
+		if(val.val != adjust_data.w2os)
+		{
+			val.val = adjust_data.w2os;
+			WriteEMU_REG(WATT2OS,val);                 //通道2的5%
+		}
 
 //		val = ReadEMU_REG(IRMS2OS);
 //		if(val.val != adjust_data.irms2os)
@@ -446,10 +446,10 @@ void ReadEMUFromTOEeprom(void)
 //			val.val = adjust_data.irms2os;
 //			WriteEMU_REG(IRMS2OS,val);                  //通道2的电流OFFSET
 //		}
-//	}
+	}
 
 //	//cal_N_mode();
-//}
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************************

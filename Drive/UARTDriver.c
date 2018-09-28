@@ -68,10 +68,13 @@ void Init_Uart(void)
 //    SBRTL=UART0_BAUDRATE&0xff;
 //    SBRTH=(UART0_BAUDRATE>>8)&0xff;
 //    SBRTH|=Bin(10000000);	                	//Bit7:打开波特率发生器，Bit6-0:高七
-	SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
-	SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
+	//SBRTL = UART_BAUDRATE_9600&0x00FF;     		//设置串口0波特率发生器
+	//SBRTH = (UART_BAUDRATE_9600>>8)&0xFF;
+	SBRTL = UART_BAUDRATE_115200&0x00FF;
+	SBRTH = (UART_BAUDRATE_115200>>8)&0xFF;
 	SFINE &= Bin(11110000);
-	SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+	//SFINE |= (UART_BFINE_9600)&0x0F;       		//设置串口0波特率发生器微调数据寄存器
+	SFINE |= (UART_BFINE_115200)&0x0F;
 	SBRTH |= 0x80;                          	//串口0波特率发生器使能
 //----------UART1------------------------
 	SCON1=Bin(01000000);				        //选用模式1 8位数据 异步 可变波特率 接收中断使能
@@ -514,8 +517,8 @@ void Uart1Decode(void)
 			EE_addrL = UartRxBuf1[3];
 			EE_addr = EE_addrH;
 			EE_addr = (EE_addr<<8) + EE_addrL;
-			EEPromSectorErase(EE_addrH);		//写之前先擦除
-		 	SEQ_write(EE_addr,&UartRxBuf1[4],1);	//写入数据
+
+		 	VER_WRbytes(EE_addr,&UartRxBuf1[4],1, 1);	//写入数据
 			//读出写入数据
 			Delay_ms(100);
 			EE_to_RAM(EE_addr, &UartTxBuf1[2], 1);
@@ -559,7 +562,7 @@ void Uart1Decode(void)
 			if(UartRxBuf1[2] == 0xFF)//写入厂家编号
 			{
 				param_data.meter_factory[0] = UartRxBuf1[3];
-				SEQ_write(EE_Meter_Factory,&param_data.meter_factory[0],1);//向EEPROM中写入表号
+				SEQ_write(EE_Meter_Factory,&param_data.meter_factory[0],1);//向EEPROM中写入厂家编号
 			}
 
 			else if(UartRxBuf1[2] == 0xAA)//第一次输入表号
@@ -595,7 +598,7 @@ void Uart1Decode(void)
 				param_data.meter_address[3] = buf[3];
 				param_data.meter_address[4] = buf[4];
 				param_data.meter_address[5] = buf[5];
-				SEQ_write(EE_Meter_address,&param_data.meter_address[0],6);//向EEPROM中写入表号
+				VER_WRbytes(EE_Meter_address,&param_data.meter_address[0],6, 1);//向EEPROM中写入表号
 			}
 			UartTxBuf1[0] = UartRxBuf1[0];
 			UartTxBuf1[1] = UartRxBuf1[1];
