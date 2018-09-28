@@ -222,6 +222,8 @@ Rev#  CheckSum   Date     Author     Comments(Function+Date)
 #define DIS_I          		2
 #define DIS_P				3
 #define DIS_kWh 	        4
+
+#define DIS_ERROR           0
 /*
 #define DIS_kW			    	5
 #define DIS_CURMD    	   		6

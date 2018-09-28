@@ -41,8 +41,8 @@ const DISPSETTINGTABLE code DispSettingTable[]=
 	0x9010,     &g_InsBCD.Voltage[0],       DIS_V,            	MEMTYPE_RAM|3,		//当前电压
 	0x9080,     &g_InsBCD.Current[0],       DIS_I,           	MEMTYPE_RAM|3,		//当前电流
 	0x9070,     &g_InsBCD.Power[0],       	DIS_P,          	MEMTYPE_RAM|4,		//当前有功功率
-	0x9090,     &KWH_PN[0],               	DIS_kWh,        	MEMTYPE_RAM|4		//有功电量
-	//0xE002,	&g_Flag.ALARM[1],			DIS_NB_ERROR,		MEMTYPE_RAM|1,	//NB初始化失败
+	0x9090,     &KWH_PN[0],               	DIS_kWh,        	MEMTYPE_RAM|4,		//有功电量
+	0xE001,		&g_Flag.ALARM[0],			DIS_ERROR,			MEMTYPE_RAM|2		//错误警告
 /*
 	0xC420,     &g_InsBCD.Power[0],         DIS_kW,             MEMTYPE_RAM|3,		//有功功率
     0xA010,     &g_Demand.CurDemand[0],     DIS_CURMD,          MEMTYPE_RAM|2,		//当月需量
@@ -337,6 +337,7 @@ void DisplayProc(void)
 	unsigned char xdata DisData[6],Buf[4];
 
 //TEST
+
 //219.9V
 //g_InsBCD.Voltage[3] = 0x00;
 //g_InsBCD.Voltage[2] = 0x99;
@@ -477,7 +478,7 @@ void DisplayProc(void)
 					ShowLCDBuf[1] |= SEG_P1;	//小数点
 					LcdDataToICBufShow(&ShowLCDBuf[0]);
 					return;
-					
+
 				}
 				else if((gbAdjCurrentStep == 2)&(gbAdjustShowID ==	Adj7_CHB_Phase))			  //0.5L
 				{
@@ -671,6 +672,18 @@ void DisplayProc(void)
 			ShowLCDBuf[1] |= SEG_P1;	//小数点
 			ShowLCDBuf[5] |= SEG_KWH;		//单位
 			//Display_HighZeroEn(&ShowLCDBuf[0], 5);
+			break;
+
+		case DIS_ERROR:
+
+			MemInitSet(&ShowLCDBuf[0],0x00,LCDFRAME);
+			DisData[5] = 0x0E;								//E
+			DisData[4] = 0x24;								//-
+			DisData[3] = (g_Flag.ALARM[1]>>4)&0x0F;			//X
+			DisData[2] = g_Flag.ALARM[1]&0x0F;				//X
+			DisData[1] = (g_Flag.ALARM[0]>>4)&0x0F;			//X
+			DisData[0] = g_Flag.ALARM[0]&0x0F;				//X
+			DspNum(&ShowLCDBuf[D_LCD_SHOW_PLACE_1], &DisData[0], D_LCD_SHOW_HEX, 6);
 			break;
 		default:
 		    break;
